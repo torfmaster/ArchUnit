@@ -78,4 +78,9 @@ public final class EvaluationResult {
     public boolean hasViolation() {
         return events.containViolation();
     }
+
+    @PublicAPI(usage = ACCESS)
+    public String getRuleText() {
+        return rule.getDescription();
+    }
 }
