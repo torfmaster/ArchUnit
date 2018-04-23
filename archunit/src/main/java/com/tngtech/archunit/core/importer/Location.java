@@ -15,16 +15,17 @@
  */
 package com.tngtech.archunit.core.importer;
 
+import com.google.common.collect.ImmutableList;
+import com.tngtech.archunit.PublicAPI;
+import com.tngtech.archunit.base.ArchUnitException.LocationException;
+import com.tngtech.archunit.base.ArchUnitException.UnsupportedUriSchemeException;
+import com.tngtech.archunit.core.InitialConfiguration;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Objects;
@@ -33,18 +34,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.ImmutableList;
-import com.tngtech.archunit.PublicAPI;
-import com.tngtech.archunit.base.ArchUnitException.LocationException;
-import com.tngtech.archunit.base.ArchUnitException.UnsupportedUriSchemeException;
-import com.tngtech.archunit.core.InitialConfiguration;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.list;
+import static java.util.Collections.*;
 
 /**
  * Handles various forms of location, from where classes can be imported, in a consistent way. Any location
@@ -177,11 +170,7 @@ public abstract class Location {
     }
 
     static URI toURI(URL url) {
-        try {
-            return url.toURI();
-        } catch (URISyntaxException e) {
-            throw new LocationException(e);
-        }
+        return URI.create(url.toExternalForm().replace(" ", "%20"));
     }
 
     /**
