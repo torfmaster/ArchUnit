@@ -3,13 +3,14 @@ package com.tngtech.archunit.exampletest;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.example.ClassViolatingCodingRules;
-import com.tngtech.archunit.visual.VisualExtension;
-import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.GeneralCodingRules.*;
+
+//import com.tngtech.archunit.visual.VisualExtension;
+//import org.junit.AfterClass;
 
 @Category(Example.class)
 public class CodingRulesTest {
@@ -36,8 +37,8 @@ public class CodingRulesTest {
         NO_CLASSES_SHOULD_USE_JAVA_UTIL_LOGGING.check(classes);
     }
 
-    @AfterClass
+    /*@AfterClass
     public static void createVisualization() {
         VisualExtension.createVisualization(classes);
-    }
+    }*/
 }
