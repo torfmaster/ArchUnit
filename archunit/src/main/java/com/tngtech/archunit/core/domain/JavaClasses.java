@@ -15,6 +15,13 @@
  */
 package com.tngtech.archunit.core.domain;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.collect.ImmutableMap;
 import com.tngtech.archunit.PublicAPI;
 import com.tngtech.archunit.base.DescribedIterable;
@@ -22,8 +29,6 @@ import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.base.Guava;
 import com.tngtech.archunit.core.domain.DomainObjectCreationContext.AccessContext;
 import com.tngtech.archunit.core.domain.properties.CanOverrideDescription;
-
-import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
