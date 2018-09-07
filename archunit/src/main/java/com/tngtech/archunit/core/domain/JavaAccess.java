@@ -15,12 +15,15 @@
  */
 package com.tngtech.archunit.core.domain;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 import com.tngtech.archunit.PublicAPI;
 import com.tngtech.archunit.base.ChainableFunction;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.base.HasDescription;
+import com.tngtech.archunit.core.Convertible;
 import com.tngtech.archunit.core.domain.properties.HasName;
 import com.tngtech.archunit.core.domain.properties.HasOwner;
 import com.tngtech.archunit.core.domain.properties.HasOwner.Functions.Get;
@@ -31,7 +34,7 @@ import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
 import static com.tngtech.archunit.core.domain.Formatters.formatLocation;
 
 public abstract class JavaAccess<TARGET extends AccessTarget>
-        implements HasName, HasDescription, HasOwner<JavaCodeUnit> {
+        implements HasName, HasDescription, HasOwner<JavaCodeUnit>, Convertible {
 
     private final JavaCodeUnit origin;
     private final TARGET target;
@@ -81,6 +84,24 @@ public abstract class JavaAccess<TARGET extends AccessTarget>
     }
 
     @Override
+    public String getDescription() {
+        String description = origin.getDescription() + " " + descriptionVerb() + " " + getTarget().getDescription();
+        String location = formatLocation(getOriginOwner(), getLineNumber());
+        return description + " in " + location;
+    }
+
+    protected abstract String descriptionVerb();
+
+    @Override
+    @SuppressWarnings("unchecked") // compatibility is explicitly checked
+    public <T> Set<T> convertTo(Class<T> type) {
+        if (type.isAssignableFrom(Dependency.class)) {
+            return (Set<T>) Collections.singleton(Dependency.from(this));
+        }
+        return Collections.emptySet();
+    }
+
+    @Override
     public int hashCode() {
         return hashCode;
     }
@@ -108,15 +129,6 @@ public abstract class JavaAccess<TARGET extends AccessTarget>
     String additionalToStringFields() {
         return "";
     }
-
-    @Override
-    public String getDescription() {
-        String description = origin.getDescription() + " " + descriptionVerb() + " " + getTarget().getDescription();
-        String location = formatLocation(getOriginOwner(), getLineNumber());
-        return description + " in " + location;
-    }
-
-    protected abstract String descriptionVerb();
 
     public static final class Predicates {
         private Predicates() {

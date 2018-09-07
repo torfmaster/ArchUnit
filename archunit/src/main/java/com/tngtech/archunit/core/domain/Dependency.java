@@ -15,6 +15,7 @@
  */
 package com.tngtech.archunit.core.domain;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -25,10 +26,12 @@ import com.tngtech.archunit.PublicAPI;
 import com.tngtech.archunit.base.ChainableFunction;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.base.HasDescription;
+import com.tngtech.archunit.core.Convertible;
 import com.tngtech.archunit.core.domain.properties.HasName;
 
 import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
 import static com.tngtech.archunit.core.domain.Formatters.formatLocation;
+import static java.util.Collections.singleton;
 
 /**
  * Represents a dependency of one Java class on another Java class. Such a dependency can occur by either of the
@@ -43,7 +46,7 @@ import static com.tngtech.archunit.core.domain.Formatters.formatLocation;
  * <li>a class has a method/constructor with parameter/return type of another class</li>
  * </ul>
  */
-public class Dependency implements HasDescription, Comparable<Dependency> {
+public class Dependency implements HasDescription, Comparable<Dependency>, Convertible {
     private final JavaClass originClass;
     private final JavaClass targetClass;
     private final int lineNumber;
@@ -57,7 +60,7 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
     }
 
     static Dependency from(JavaAccess<?> access) {
-        return new Dependency(access.getOriginOwner(), access.getTargetOwner(), access.getLineNumber(), access.getDescription());
+        return new Dependency.FromAccess(access);
     }
 
     static Dependency fromInheritance(JavaClass origin, JavaClass targetSuperType) {
@@ -116,6 +119,11 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
     @Override
     public String getDescription() {
         return description;
+    }
+
+    @Override
+    public <T> Set<T> convertTo(Class<T> type) {
+        return Collections.emptySet();
     }
 
     @Override
@@ -239,5 +247,45 @@ public class Dependency implements HasDescription, Comparable<Dependency> {
                 return input.getTargetClass();
             }
         };
+    }
+
+    private static class FromAccess extends Dependency {
+        private final JavaAccess<?> access;
+
+        FromAccess(JavaAccess<?> access) {
+            super(access.getOriginOwner(), access.getTargetOwner(), access.getLineNumber(), access.getDescription());
+            this.access = access;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked") // compatibility is explicitly checked
+        public <T> Set<T> convertTo(Class<T> type) {
+            if (type.isAssignableFrom(access.getClass())) {
+                return (Set<T>) singleton(access);
+            }
+            return super.convertTo(type);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(access);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            final FromAccess other = (FromAccess) obj;
+            return Objects.equals(this.access, other.access);
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getEnclosingClass().getSimpleName() + "." + super.toString();
+        }
     }
 }

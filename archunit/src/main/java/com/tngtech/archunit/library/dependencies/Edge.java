@@ -19,10 +19,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.tngtech.archunit.core.Convertible;
 
-class Edge<T, ATTACHMENT> {
+class Edge<T, ATTACHMENT> implements Convertible {
     private final T from;
     private final T to;
     private final List<ATTACHMENT> attachments = new ArrayList<>();
@@ -51,6 +54,20 @@ class Edge<T, ATTACHMENT> {
 
     void addAttachment(ATTACHMENT attachment) {
         attachments.add(attachment);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked") // compatibility ensured via reflection
+    public <S> Set<S> convertTo(Class<S> type) {
+        ImmutableSet.Builder<S> result = ImmutableSet.builder();
+        for (ATTACHMENT attachment : attachments) {
+            if (type.isInstance(attachment)) {
+                result.add((S) attachment);
+            } else if (attachment instanceof Convertible) {
+                result.addAll(((Convertible) attachment).convertTo(type));
+            }
+        }
+        return result.build();
     }
 
     @Override

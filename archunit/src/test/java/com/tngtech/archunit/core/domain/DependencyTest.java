@@ -6,6 +6,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.properties.HasName;
+import com.tngtech.archunit.testutil.Assertions.ConversionResultAssertion;
 import org.assertj.core.api.AbstractBooleanAssert;
 import org.junit.Test;
 
@@ -17,6 +18,7 @@ import static com.tngtech.archunit.core.domain.Dependency.Predicates.dependencyT
 import static com.tngtech.archunit.core.domain.TestUtils.importClassWithContext;
 import static com.tngtech.archunit.core.domain.TestUtils.simulateCall;
 import static com.tngtech.archunit.testutil.Assertions.assertThat;
+import static com.tngtech.archunit.testutil.Assertions.assertThatConversionOf;
 
 public class DependencyTest {
     @Test
@@ -113,6 +115,27 @@ public class DependencyTest {
         assertThat(GET_TARGET_CLASS.apply(createDependency(Origin.class, Target.class))).matches(Target.class);
     }
 
+    @Test
+    public void convert_dependency_from_access() {
+        JavaMethodCall call = simulateCall().from(getClass(), "toString").to(Object.class, "toString");
+
+        Dependency dependency = Dependency.from(call);
+
+        assertThatConversionOf(dependency)
+                .isNotPossibleTo(JavaClass.class)
+                .isNotPossibleTo(JavaFieldAccess.class)
+                .isPossibleToSingleElement(Object.class, equalTo(call))
+                .isPossibleToSingleElement(JavaAccess.class, equalTo(call))
+                .isPossibleToSingleElement(JavaMethodCall.class, equalTo(call));
+    }
+
+    @Test
+    public void dependency_not_from_access_cannot_be_converted() {
+        Dependency dependency = createDependency(Origin.class, Target.class);
+
+        assertThatConversionOf(dependency).isNotPossibleTo(JavaClass.class);
+    }
+
     private DescribedPredicate<JavaClass> predicateWithDescription(String description) {
         return DescribedPredicate.<JavaClass>alwaysTrue().as(description);
     }
@@ -124,6 +147,15 @@ public class DependencyTest {
     private static Dependency createDependency(Class<?> originClass, Class<?> targetClass) {
         return Dependency.fromInheritance(
                 importClassWithContext(originClass), importClassWithContext(targetClass));
+    }
+
+    private ConversionResultAssertion<Object> equalTo(final JavaMethodCall call) {
+        return new ConversionResultAssertion<Object>() {
+            @Override
+            public void assertResult(Object access) {
+                assertThat(access).isEqualTo(call);
+            }
+        };
     }
 
     @Override

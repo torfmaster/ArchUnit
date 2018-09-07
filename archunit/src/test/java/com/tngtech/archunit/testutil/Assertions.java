@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.tngtech.archunit.base.Optional;
+import com.tngtech.archunit.core.Convertible;
 import com.tngtech.archunit.core.domain.AccessTarget;
 import com.tngtech.archunit.core.domain.AccessTarget.ConstructorCallTarget;
 import com.tngtech.archunit.core.domain.AccessTarget.FieldAccessTarget;
@@ -126,6 +127,10 @@ public class Assertions extends org.assertj.core.api.Assertions {
 
     public static JavaEnumConstantsAssertion assertThat(JavaEnumConstant[] enumConstants) {
         return new JavaEnumConstantsAssertion(enumConstants);
+    }
+
+    public static ConversionAssertion assertThatConversionOf(Convertible convertible) {
+        return new ConversionAssertion(convertible);
     }
 
     public static JavaTypeAssertion assertThat(JavaType javaType) {
@@ -780,5 +785,31 @@ public class Assertions extends org.assertj.core.api.Assertions {
             assertThat(actual.getSimpleName()).as("simple name").isEqualTo(clazz.getSimpleName());
             assertThat(actual.getPackageName()).as("package").isEqualTo(clazz.getPackage() != null ? clazz.getPackage().getName() : "");
         }
+    }
+
+    public static class ConversionAssertion extends AbstractObjectAssert<ConversionAssertion, Convertible> {
+        private ConversionAssertion(Convertible actual) {
+            super(actual, ConversionAssertion.class);
+        }
+
+        public ConversionAssertion isNotPossibleTo(Class<?> type) {
+            assertThat(actual.convertTo(type))
+                    .as(String.format("conversion of %s to incompatible type %s", actual.getClass().getName(), type.getName()))
+                    .isEmpty();
+            return this;
+        }
+
+        public <T> ConversionAssertion isPossibleToSingleElement(Class<T> type, ConversionResultAssertion<? super T> resultAssertion) {
+            Set<T> converted = actual.convertTo(type);
+            assertThat(converted)
+                    .as(String.format("result of converting %s to %s", actual.getClass().getName(), type.getName()))
+                    .hasSize(1);
+            resultAssertion.assertResult(getOnlyElement(converted));
+            return this;
+        }
+    }
+
+    public interface ConversionResultAssertion<T> {
+        void assertResult(T result);
     }
 }
