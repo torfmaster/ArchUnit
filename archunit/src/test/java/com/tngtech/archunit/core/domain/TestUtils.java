@@ -123,6 +123,40 @@ public class TestUtils {
         return Dependency.from(access);
     }
 
+    public static JavaConstructor importConstructor(Class<?> clazz, Class<?>... parameterTypes) {
+        return importClassWithContext(clazz).getConstructor(parameterTypes);
+    }
+
+    public static JavaMethod importMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
+        return importClassWithContext(clazz).getMethod(methodName, parameterTypes);
+    }
+
+    public static JavaField importField(Class<?> clazz, String fieldName) {
+        return importClassWithContext(clazz).getField(fieldName);
+    }
+
+    public static JavaConstructorCall importConstructorCall(Class<?> fromClass, Class<?> toClass) {
+        return getOnlyElementWithTarget(importClassWithContext(fromClass).getConstructorCallsFromSelf(), toClass);
+    }
+
+    public static JavaMethodCall importMethodCall(Class<?> fromClass, Class<?> toClass) {
+        return getOnlyElementWithTarget(importClassWithContext(fromClass).getMethodCallsFromSelf(), toClass);
+    }
+
+    public static JavaFieldAccess importFieldAccess(Class<?> fromClass, Class<?> toClass) {
+        return getOnlyElementWithTarget(importClassWithContext(fromClass).getFieldAccessesFromSelf(), toClass);
+    }
+
+    private static <T extends JavaAccess<?>> T getOnlyElementWithTarget(Set<? extends T> accesses, Class<?> wantedTarget) {
+        Set<T> result = new HashSet<>();
+        for (T access : accesses) {
+            if (access.getTargetOwner().isEquivalentTo(wantedTarget)) {
+                result.add(access);
+            }
+        }
+        return getOnlyElement(result);
+    }
+
     public static class AccessesSimulator {
         private final Set<MethodCallTarget> targets = new HashSet<>();
 
@@ -148,6 +182,10 @@ public class TestUtils {
             this.targets = targets;
             this.method = method;
             this.lineNumber = lineNumber;
+        }
+
+        public AccessSimulator inLineNumber(int number) {
+            return new AccessSimulator(targets, method, number);
         }
 
         public JavaMethodCall to(JavaMethod target) {

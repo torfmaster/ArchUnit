@@ -7,8 +7,12 @@ import com.google.common.collect.ImmutableList;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.properties.HasName;
 import com.tngtech.archunit.testutil.Assertions.ConversionResultAssertion;
+import com.tngtech.java.junit.dataprovider.DataProvider;
+import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import com.tngtech.java.junit.dataprovider.UseDataProvider;
 import org.assertj.core.api.AbstractBooleanAssert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static com.tngtech.archunit.core.domain.Dependency.Functions.GET_ORIGIN_CLASS;
 import static com.tngtech.archunit.core.domain.Dependency.Functions.GET_TARGET_CLASS;
@@ -16,10 +20,19 @@ import static com.tngtech.archunit.core.domain.Dependency.Predicates.dependency;
 import static com.tngtech.archunit.core.domain.Dependency.Predicates.dependencyOrigin;
 import static com.tngtech.archunit.core.domain.Dependency.Predicates.dependencyTarget;
 import static com.tngtech.archunit.core.domain.TestUtils.importClassWithContext;
+import static com.tngtech.archunit.core.domain.TestUtils.importConstructor;
+import static com.tngtech.archunit.core.domain.TestUtils.importConstructorCall;
+import static com.tngtech.archunit.core.domain.TestUtils.importField;
+import static com.tngtech.archunit.core.domain.TestUtils.importFieldAccess;
+import static com.tngtech.archunit.core.domain.TestUtils.importMethod;
+import static com.tngtech.archunit.core.domain.TestUtils.importMethodCall;
 import static com.tngtech.archunit.core.domain.TestUtils.simulateCall;
 import static com.tngtech.archunit.testutil.Assertions.assertThat;
 import static com.tngtech.archunit.testutil.Assertions.assertThatConversionOf;
+import static com.tngtech.java.junit.dataprovider.DataProviders.$;
+import static com.tngtech.java.junit.dataprovider.DataProviders.$$;
 
+@RunWith(DataProviderRunner.class)
 public class DependencyTest {
     @Test
     public void Dependency_from_access() {
@@ -50,11 +63,47 @@ public class DependencyTest {
                 .contains("Interface <" + origin.getName() + "> extends interface <" + target.getName() + ">");
     }
 
-    private Dependency createDependency(JavaClass origin, JavaClass target) {
-        Dependency dependency = Dependency.fromInheritance(origin, target);
-        assertThat(dependency.getOriginClass()).as("origin class").isEqualTo(origin);
-        assertThat(dependency.getTargetClass()).as("target class").isEqualTo(target);
-        return dependency;
+    @DataProvider
+    public static Object[][] Dependencies_with_type() {
+        return $$(
+                $(
+                        Dependency.from(importConstructorCall(ClassWithMembers.class, DependencyClass.class)),
+                        Dependency.Type.CONSTRUCTOR_CALL
+                ),
+                $(
+                        Dependency.fromParameter(importConstructor(ClassWithMembers.class, String.class), importClassWithContext(String.class)),
+                        Dependency.Type.CONSTRUCTOR_PARAMETER_TYPE
+                ),
+                $(
+                        Dependency.from(importFieldAccess(ClassWithMembers.class, DependencyClass.class)),
+                        Dependency.Type.FIELD_ACCESS
+                ),
+                $(
+                        Dependency.fromField(importField(ClassWithMembers.class, "someField")),
+                        Dependency.Type.FIELD_TYPE
+                ),
+                $(
+                        Dependency.fromInheritance(importClassWithContext(String.class), importClassWithContext(Object.class)),
+                        Dependency.Type.INHERITANCE
+                ),
+                $(
+                        Dependency.from(importMethodCall(ClassWithMembers.class, DependencyClass.class)),
+                        Dependency.Type.METHOD_CALL
+                ),
+                $(
+                        Dependency.fromParameter(importMethod(ClassWithMembers.class, "method", String.class), importClassWithContext(String.class)),
+                        Dependency.Type.METHOD_PARAMETER_TYPE
+                ),
+                $(
+                        Dependency.fromReturnType(importMethod(ClassWithMembers.class, "method", String.class)),
+                        Dependency.Type.METHOD_RETURN_TYPE
+                ));
+    }
+
+    @Test
+    @UseDataProvider("Dependencies_with_type")
+    public void Dependency_has_respective_Type(Dependency dependency, Dependency.Type expectedType) {
+        assertThat(dependency.getType()).as("Type of the Dependency").isEqualTo(expectedType);
     }
 
     @Test
@@ -144,6 +193,13 @@ public class DependencyTest {
         return new DependencyAssertion(createDependency(originClass, targetClass));
     }
 
+    private Dependency createDependency(JavaClass origin, JavaClass target) {
+        Dependency dependency = Dependency.fromInheritance(origin, target);
+        assertThat(dependency.getOriginClass()).as("origin class").isEqualTo(origin);
+        assertThat(dependency.getTargetClass()).as("target class").isEqualTo(target);
+        return dependency;
+    }
+
     private static Dependency createDependency(Class<?> originClass, Class<?> targetClass) {
         return Dependency.fromInheritance(
                 importClassWithContext(originClass), importClassWithContext(targetClass));
@@ -163,7 +219,29 @@ public class DependencyTest {
         return MoreObjects.toStringHelper(this).toString();
     }
 
+    private static class ClassWithMembers {
+        private String someField;
+        private DependencyClass dependencyClass;
+
+        static {
+            new DependencyClass().someField = "";
+        }
+
+        public ClassWithMembers(String someField) {
+            this.someField = someField;
+            dependencyClass.call();
+        }
+
+        String method(String param) {
+            return null;
+        }
+    }
+
     private static class DependencyClass {
+        String someField;
+
+        void call() {
+        }
     }
 
     private interface DependencySubInterface extends DependencyInterface {

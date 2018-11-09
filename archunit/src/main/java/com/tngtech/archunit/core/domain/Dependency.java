@@ -17,11 +17,13 @@ package com.tngtech.archunit.core.domain;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.ImmutableMap;
 import com.tngtech.archunit.PublicAPI;
 import com.tngtech.archunit.base.ChainableFunction;
 import com.tngtech.archunit.base.DescribedPredicate;
@@ -29,6 +31,7 @@ import com.tngtech.archunit.base.HasDescription;
 import com.tngtech.archunit.core.Convertible;
 import com.tngtech.archunit.core.domain.properties.HasName;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
 import static com.tngtech.archunit.core.domain.Formatters.formatLocation;
 import static java.util.Collections.singleton;
@@ -47,16 +50,18 @@ import static java.util.Collections.singleton;
  * </ul>
  */
 public class Dependency implements HasDescription, Comparable<Dependency>, Convertible {
+    private final Type type;
     private final JavaClass originClass;
     private final JavaClass targetClass;
     private final int lineNumber;
     private final String description;
 
-    private Dependency(JavaClass originClass, JavaClass targetClass, int lineNumber, String description) {
-        this.originClass = originClass;
-        this.targetClass = targetClass;
+    private Dependency(Type type, JavaClass originClass, JavaClass targetClass, int lineNumber, String description) {
+        this.type = checkNotNull(type);
+        this.originClass = checkNotNull(originClass);
+        this.targetClass = checkNotNull(targetClass);
         this.lineNumber = lineNumber;
-        this.description = description;
+        this.description = checkNotNull(description);
     }
 
     static Dependency from(JavaAccess<?> access) {
@@ -75,35 +80,45 @@ public class Dependency implements HasDescription, Comparable<Dependency>, Conve
         String dependencyDescription = originDescription + " " + dependencyType + " " + targetType + " " + targetDescription;
 
         String description = dependencyDescription + " in " + formatLocation(origin, 0);
-        return new Dependency(origin, targetSuperType, 0, description);
+        return new Dependency(Type.INHERITANCE, origin, targetSuperType, 0, description);
     }
 
     static Dependency fromField(JavaField field) {
-        return createDependencyFromJavaMember("Field", field, "has type", field.getType());
+        return createDependencyFromJavaMember(Type.FIELD_TYPE, "Field", field, "has type", field.getType());
     }
 
     static Dependency fromReturnType(JavaMethod method) {
-        return createDependencyFromJavaMember("Method", method, "has return type", method.getReturnType());
+        return createDependencyFromJavaMember(Type.METHOD_RETURN_TYPE, "Method", method, "has return type", method.getReturnType());
     }
 
     static Dependency fromParameter(JavaMethod method, JavaClass parameter) {
-        return createDependencyFromJavaMember("Method", method, "has parameter of type", parameter);
+        return createDependencyFromJavaMember(Type.METHOD_PARAMETER_TYPE, "Method", method, "has parameter of type", parameter);
     }
 
     static Dependency fromParameter(JavaConstructor constructor, JavaClass parameter) {
-        return createDependencyFromJavaMember("Constructor", constructor, "has parameter of type", parameter);
+        return createDependencyFromJavaMember(Type.CONSTRUCTOR_PARAMETER_TYPE, "Constructor", constructor, "has parameter of type", parameter);
     }
 
-    private static Dependency createDependencyFromJavaMember(String memberType, JavaMember origin, String dependencyType, JavaClass target) {
+    private static Dependency createDependencyFromJavaMember(
+            Type dependencyType,
+            String memberType,
+            JavaMember origin,
+            String dependencyTypeDescription,
+            JavaClass target) {
         String originDescription = memberType + " " + bracketFormat(origin.getFullName());
         String targetDescription = bracketFormat(target.getName());
-        String dependencyDescription = originDescription + " " + dependencyType + " " + targetDescription;
+        String dependencyDescription = originDescription + " " + dependencyTypeDescription + " " + targetDescription;
         String description = dependencyDescription + " in " + formatLocation(origin.getOwner(), 0);
-        return new Dependency(origin.getOwner(), target, 0, description);
+        return new Dependency(dependencyType, origin.getOwner(), target, 0, description);
     }
 
     private static String bracketFormat(String name) {
         return "<" + name + ">";
+    }
+
+    @PublicAPI(usage = ACCESS)
+    public Type getType() {
+        return type;
     }
 
     @PublicAPI(usage = ACCESS)
@@ -117,11 +132,13 @@ public class Dependency implements HasDescription, Comparable<Dependency>, Conve
     }
 
     @Override
+    @PublicAPI(usage = ACCESS)
     public String getDescription() {
         return description;
     }
 
     @Override
+    @PublicAPI(usage = ACCESS)
     public <T> Set<T> convertTo(Class<T> type) {
         return Collections.emptySet();
     }
@@ -172,6 +189,57 @@ public class Dependency implements HasDescription, Comparable<Dependency>, Conve
             classes.add(dependency.getTargetClass());
         }
         return JavaClasses.of(classes);
+    }
+
+    /**
+     * Represents the type of a {@link Dependency}. This can be used by clients to distinguish cases with different
+     * causes for a dependency, e.g. is it a field access or implementing an interface, ...
+     */
+    public enum Type {
+        /**
+         * The dependency originates from a {@link JavaCodeUnit} calling a {@link JavaConstructor} of another {@link JavaClass}.
+         */
+        @PublicAPI(usage = ACCESS)
+        CONSTRUCTOR_CALL,
+        /**
+         * The dependency originates from a {@link JavaClass} declaring a {@link JavaConstructor} with another {@link JavaClass}
+         * as one of its parameter types.
+         */
+        @PublicAPI(usage = ACCESS)
+        CONSTRUCTOR_PARAMETER_TYPE,
+        /**
+         * The dependency originates from a {@link JavaCodeUnit} accessing a {@link JavaField} of another {@link JavaClass}.
+         */
+        @PublicAPI(usage = ACCESS)
+        FIELD_ACCESS,
+        /**
+         * The dependency originates from a {@link JavaClass} declaring a {@link JavaField} with another {@link JavaClass} as its type.
+         */
+        @PublicAPI(usage = ACCESS)
+        FIELD_TYPE,
+        /**
+         * The dependency originates from a {@link JavaClass} either extending another {@link JavaClass} or
+         * implementing another {@link JavaClass}.
+         */
+        @PublicAPI(usage = ACCESS)
+        INHERITANCE,
+        /**
+         * The dependency originates from a {@link JavaCodeUnit} calling a {@link JavaMethod} of another {@link JavaClass}.
+         */
+        @PublicAPI(usage = ACCESS)
+        METHOD_CALL,
+        /**
+         * The dependency originates from a {@link JavaClass} declaring a {@link JavaMethod} with another {@link JavaClass}
+         * as one of its parameter types.
+         */
+        @PublicAPI(usage = ACCESS)
+        METHOD_PARAMETER_TYPE,
+        /**
+         * The dependency originates from a {@link JavaClass} declaring a {@link JavaMethod} with another {@link JavaClass}
+         * as its return type.
+         */
+        @PublicAPI(usage = ACCESS)
+        METHOD_RETURN_TYPE
     }
 
     public static final class Predicates {
@@ -250,11 +318,22 @@ public class Dependency implements HasDescription, Comparable<Dependency>, Conve
     }
 
     private static class FromAccess extends Dependency {
+        private static final Map<Class<? extends JavaAccess<?>>, Type> ACCESS_TYPE_TO_DEPENDENCY_TYPE = ImmutableMap.of(
+                JavaFieldAccess.class, Type.FIELD_ACCESS,
+                JavaMethodCall.class, Type.METHOD_CALL,
+                JavaConstructorCall.class, Type.CONSTRUCTOR_CALL
+        );
+
         private final JavaAccess<?> access;
 
         FromAccess(JavaAccess<?> access) {
-            super(access.getOriginOwner(), access.getTargetOwner(), access.getLineNumber(), access.getDescription());
+            super(getTypeOf(access), access.getOriginOwner(), access.getTargetOwner(), access.getLineNumber(), access.getDescription());
             this.access = access;
+        }
+
+        private static Type getTypeOf(JavaAccess<?> access) {
+            return checkNotNull(ACCESS_TYPE_TO_DEPENDENCY_TYPE.get(access.getClass()),
+                    "Could not determine dependency type for %s. This is most likely a bug.", access);
         }
 
         @Override
