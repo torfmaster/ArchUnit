@@ -53,13 +53,13 @@ class JsonViolationExporter {
         });
     }
 
-    /*private void extractDependencies(EvaluationResult result, final Multimap<String, JsonViolation> violations) {
-        result.handleViolations(new ViolationHandler<Cycle>() {
+    /*private void extractDependencies(final EvaluationResult result, final Multimap<String, JsonViolation> violations) {
+        result.handleViolations(new ViolationHandler<Dependency>() {
             @Override
-            public void handle(Collection<Cycle> violatingObjects, String message) {
-                for (Cycle violatingObject : violatingObjects) {
+            public void handle(Collection<Dependency> violatingObjects, String message) {
+                for (Dependency violatingObject : violatingObjects) {
                     //FIXME:
-                    //evaluationResult.addViolation(JsonViolation.from(violatingObject));
+                    violations.put(result.getRuleText(), JsonViolation.from(violatingObject));
                 }
             }
         });

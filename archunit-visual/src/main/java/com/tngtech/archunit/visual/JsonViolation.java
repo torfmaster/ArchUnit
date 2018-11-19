@@ -37,11 +37,9 @@ class JsonViolation {
         );
     }
 
-    String getIdentifier() {
-        return origin + "->" + target;
-    }
-
     public static JsonViolation from(Dependency violatingObject) {
+        //violatingObject.
+        //TODO: use description only
         return new JsonViolation(violatingObject.getOriginClass().getName(), violatingObject.getTargetClass().getName());
     }
 }
