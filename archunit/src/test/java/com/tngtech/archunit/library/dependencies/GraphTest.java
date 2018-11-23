@@ -1,11 +1,11 @@
 package com.tngtech.archunit.library.dependencies;
 
+import com.google.common.collect.ImmutableSet;
+import org.junit.Test;
+
 import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
-import org.junit.Test;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -62,6 +62,20 @@ public class GraphTest {
         assertThat(cycle.getEdges()).hasSize(2);
         assertEdgeExists(cycle, nodeA, nodeB);
         assertEdgeExists(cycle, nodeB, nodeA);
+    }
+
+    @Test
+    public void nested_cycles_are_detected() {
+        Graph<String, String> graph = new Graph<>();
+
+        String nodeA = "Node-A";
+        String nodeB = "Node-B";
+        String nodeC = "Node-C";
+        graph.add(nodeA, Collections.<Edge<String, String>>emptySet());
+        graph.add(nodeB, ImmutableSet.<Edge<String, String>>of(new SimpleEdge(nodeB, nodeA), new SimpleEdge(nodeA, nodeB)));
+        graph.add(nodeC, ImmutableSet.<Edge<String, String>>of(new SimpleEdge(nodeC, nodeA), new SimpleEdge(nodeB, nodeC)));
+
+        assertThat(graph.getCycles()).hasSize(2);
     }
 
     @Test
