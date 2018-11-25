@@ -36,10 +36,10 @@ class CycleFinder<T, ATTACHMENT> {
     private AtomicInteger s = new AtomicInteger(0);
 
 
-    CycleFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges) {
-        this.nodes = nodes;
-        this.outgoingEdges = outgoingEdges;
-        this.ordering = enumerateVertices(nodes);
+    CycleFinder(Graph<T, ATTACHMENT> graph) {
+        this.nodes = graph.getNodes();
+        this.outgoingEdges = graph.getOutgoingEdges();
+        this.ordering = enumerateVertices(graph.getNodes());
     }
 
     ImmutableSet<Cycle<T, ATTACHMENT>> findCircuits() {
@@ -48,14 +48,7 @@ class CycleFinder<T, ATTACHMENT> {
             Optional<HashSet<T>> mininmalStronglyConnectedComponent = new ComponentFinder<>(nodes, outgoingEdges, ordering).findLeastScc(s.get());
             if (mininmalStronglyConnectedComponent.isPresent()) {
                 HashSet<T> minimalComponent = mininmalStronglyConnectedComponent.get();
-                Optional<Integer> min = Optional.absent();
-                for (T t : minimalComponent) {
-                    if (!min.isPresent()) {
-                        min = Optional.of(ordering.get(t));
-                    } else {
-                        min = Optional.of(Math.min(ordering.get(t), min.get()));
-                    }
-                }
+                Optional<Integer> min = getMinimalVertexIndex(minimalComponent);
                 if (min.isPresent()) {
                     s.set(min.get());
                     for (T t : minimalComponent) {
@@ -89,7 +82,8 @@ class CycleFinder<T, ATTACHMENT> {
             edgeStack.push(edge.get());
         }
 
-        block(ordering.inverse().get(vIndex));
+        T v = ordering.inverse().get(vIndex);
+        block(v);
 
         for (Edge<T, ATTACHMENT> edgeFromVToW : getAdjacents(component, vIndex)) {
             T w = edgeFromVToW.getTo();
@@ -175,5 +169,17 @@ class CycleFinder<T, ATTACHMENT> {
             i++;
         }
         return builder.build();
+    }
+
+    private Optional<Integer> getMinimalVertexIndex(HashSet<T> minimalComponent) {
+        Optional<Integer> min = Optional.absent();
+        for (T t : minimalComponent) {
+            if (!min.isPresent()) {
+                min = Optional.of(ordering.get(t));
+            } else {
+                min = Optional.of(Math.min(ordering.get(t), min.get()));
+            }
+        }
+        return min;
     }
 }

@@ -53,7 +53,7 @@ class Graph<T, ATTACHMENT> {
     }
 
     Set<Cycle<T, ATTACHMENT>> getCycles() {
-        return new CycleFinder<>(this.getNodes(), this.getOutgoingEdges()).findCircuits();
+        return new CycleFinder<>(this).findCircuits();
     }
 
     @Override
