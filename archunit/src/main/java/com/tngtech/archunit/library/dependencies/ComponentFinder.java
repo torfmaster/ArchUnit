@@ -40,12 +40,12 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
     Optional<HashSet<T>> findLeastScc(int i) {
-        HashSet<HashSet<T>> sccs = getSccs(i);
+        HashSet<HashSet<T>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(i);
         Optional<HashSet<T>> chosen = Optional.absent();
         Optional<Integer> globalMin = Optional.absent();
-        for (HashSet<T> scc : sccs) {
+        for (HashSet<T> stronglyConncectedComponent : stronglyConnectedComponents) {
             Optional<Integer> min = Optional.absent();
-            for (T t : scc) {
+            for (T t : stronglyConncectedComponent) {
                 if (!min.isPresent()) {
                     min = Optional.of(ordering.get(t));
                 } else {
@@ -54,12 +54,12 @@ class ComponentFinder<T, ATTACHMENT> {
             }
             if (!globalMin.isPresent()) {
                 globalMin = min;
-                chosen = Optional.of(scc);
+                chosen = Optional.of(stronglyConncectedComponent);
             } else {
                 if (min.isPresent()) {
                     globalMin = Optional.of(Math.min(globalMin.get(), min.get()));
                     if (globalMin.get().equals(min.get())) {
-                        chosen = Optional.of(scc);
+                        chosen = Optional.of(stronglyConncectedComponent);
                     }
                 }
             }
@@ -68,7 +68,7 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
 
-    HashSet<HashSet<T>> getSccs(int i) {
+    HashSet<HashSet<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
         for (T node : nodes) {
             if (!indices.containsKey(node) && ordering.get(node) >= i) {
                 scc(node, i);

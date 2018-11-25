@@ -26,7 +26,7 @@ public class ComponentFinderTest {
         builder.put(nodeB, 1);
         builder.put(nodeC, 2);
 
-        HashSet<HashSet<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getSccs(0);
+        HashSet<HashSet<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
         assertThat(sccs).hasSize(3);
     }
 
@@ -45,7 +45,7 @@ public class ComponentFinderTest {
         builder.put(nodeB, 1);
         builder.put(nodeC, 2);
 
-        HashSet<HashSet<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getSccs(0);
+        HashSet<HashSet<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
         assertThat(sccs).hasSize(1);
     }
 }

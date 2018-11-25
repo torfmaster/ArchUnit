@@ -29,7 +29,7 @@ class CycleFinder<T, ATTACHMENT> {
     private ImmutableBiMap<T, Integer> ordering;
     private HashMap<T, Boolean> blocked = new HashMap<>();
 
-    private HashMap<Integer, LinkedList<Integer>> b = new HashMap<>();
+    private HashMap<Integer, LinkedList<Integer>> blockedBy = new HashMap<>();
     private ArrayDeque<Edge<T, ATTACHMENT>> edgeStack = new ArrayDeque<>();
     private HashSet<List<Edge<T, ATTACHMENT>>> circuits = new HashSet<>();
 
@@ -53,7 +53,7 @@ class CycleFinder<T, ATTACHMENT> {
                     s.set(min.get());
                     for (T t : minimalComponent) {
                         blocked.put(t, false);
-                        b.put(ordering.get(t), new LinkedList<Integer>());
+                        blockedBy.put(ordering.get(t), new LinkedList<Integer>());
                     }
                     circuit(s.get(), minimalComponent, Optional.<Edge<T, ATTACHMENT>>absent());
                     s.addAndGet(1);
@@ -82,8 +82,7 @@ class CycleFinder<T, ATTACHMENT> {
             edgeStack.push(edge.get());
         }
 
-        T v = ordering.inverse().get(vIndex);
-        block(v);
+        block(vIndex);
 
         for (Edge<T, ATTACHMENT> edgeFromVToW : getAdjacents(component, vIndex)) {
             T w = edgeFromVToW.getTo();
@@ -109,12 +108,12 @@ class CycleFinder<T, ATTACHMENT> {
         } else {
             for (Edge<T, ATTACHMENT> w : getAdjacents(component, vIndex)) {
                 Integer indexOfW = ordering.get(w.getTo());
-                if (!b.containsKey(indexOfW)) {
+                if (!blockedBy.containsKey(indexOfW)) {
                     LinkedList<Integer> integers = new LinkedList<>();
                     integers.add(vIndex);
-                    b.put(indexOfW, integers);
-                } else if (!b.get(indexOfW).contains(vIndex)) {
-                    List<Integer> integers = b.get(indexOfW);
+                    blockedBy.put(indexOfW, integers);
+                } else if (!blockedBy.get(indexOfW).contains(vIndex)) {
+                    List<Integer> integers = blockedBy.get(indexOfW);
                     integers.add(vIndex);
                 }
             }
@@ -139,14 +138,14 @@ class CycleFinder<T, ATTACHMENT> {
 
     }
 
-    private void block(T key) {
-        blocked.put(key, true);
+    private void block(int vIndex) {
+        blocked.put(ordering.inverse().get(vIndex), true);
     }
 
     private void unblock(int s) {
         blocked.put(ordering.inverse().get(s), false);
-        if (b.containsKey(s)) {
-            LinkedList<Integer> elements = b.get(s);
+        if (blockedBy.containsKey(s)) {
+            LinkedList<Integer> elements = blockedBy.get(s);
             List<Integer> nodesForS = ImmutableList.copyOf(elements);
             for (Integer node : nodesForS) {
                 elements.remove(node);
