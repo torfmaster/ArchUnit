@@ -83,42 +83,45 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
 
-    private boolean circuit(int v, HashSet<T> component, Optional<Edge<T, ATTACHMENT>> edge) {
-        boolean result = false;
+    private boolean circuit(int vIndex, HashSet<T> component, Optional<Edge<T, ATTACHMENT>> edge) {
+        boolean circuitFound = false;
         if (edge.isPresent()) {
             edgeStack.push(edge.get());
         }
 
-        block(ordering.inverse().get(v));
+        block(ordering.inverse().get(vIndex));
 
-        for (Edge<T, ATTACHMENT> w : getAdjacents(component, v)) {
-            if (w.getTo().equals(ordering.inverse().get(s.get()))) {
+        for (Edge<T, ATTACHMENT> edgeFromVToW : getAdjacents(component, vIndex)) {
+            T w = edgeFromVToW.getTo();
+            Integer indexOfW = ordering.get(w);
+            if (w.equals(ordering.inverse().get(s.get()))) {
                 ImmutableList.Builder<Edge<T, ATTACHMENT>> edgeBuilder = new ImmutableList.Builder<>();
-                ArrayDeque<Edge<T, ATTACHMENT>> edgeClone = edgeStack.clone();
-                edgeClone.push(w);
-                while (!edgeClone.isEmpty()) {
-                    edgeBuilder.add(edgeClone.pop());
+                ArrayDeque<Edge<T, ATTACHMENT>> copyOfEdgeStackToPop = edgeStack.clone();
+                copyOfEdgeStackToPop.push(edgeFromVToW);
+                while (!copyOfEdgeStackToPop.isEmpty()) {
+                    edgeBuilder.add(copyOfEdgeStackToPop.pop());
                 }
                 circuits.add(edgeBuilder.build().reverse());
-                result = true;
-            } else if (!isBlocked(w.getTo())) {
-                if (circuit(ordering.get(w.getTo()), component, Optional.of(w))) {
-                    result = true;
+                circuitFound = true;
+            } else if (!isBlocked(w)) {
+                if (circuit(indexOfW, component, Optional.of(edgeFromVToW))) {
+                    circuitFound = true;
                 }
             }
         }
 
-        if (result) {
-            unblock(v);
+        if (circuitFound) {
+            unblock(vIndex);
         } else {
-            for (Edge<T, ATTACHMENT> w : getAdjacents(component, v)) {
-                if (!b.containsKey(ordering.get(w.getTo()))) {
+            for (Edge<T, ATTACHMENT> w : getAdjacents(component, vIndex)) {
+                Integer indexOfW = ordering.get(w.getTo());
+                if (!b.containsKey(indexOfW)) {
                     LinkedList<Integer> integers = new LinkedList<>();
-                    integers.add(v);
-                    b.put(ordering.get(w.getTo()), integers);
-                } else if (!b.get(ordering.get(w.getTo())).contains(v)) {
-                    List<Integer> integers = b.get(ordering.get(w.getTo()));
-                    integers.add(v);
+                    integers.add(vIndex);
+                    b.put(indexOfW, integers);
+                } else if (!b.get(indexOfW).contains(vIndex)) {
+                    List<Integer> integers = b.get(indexOfW);
+                    integers.add(vIndex);
                 }
             }
         }
@@ -126,7 +129,7 @@ class CycleFinder<T, ATTACHMENT> {
         if (edge.isPresent()) {
             edgeStack.pop();
         }
-        return result;
+        return circuitFound;
     }
 
     private ImmutableSet<Edge<T, ATTACHMENT>> getAdjacents(final HashSet<T> component, final int v) {
