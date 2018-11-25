@@ -39,13 +39,7 @@ class CycleFinder<T, ATTACHMENT> {
     CycleFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges) {
         this.nodes = nodes;
         this.outgoingEdges = outgoingEdges;
-        ImmutableBiMap.Builder<T, Integer> builder = new ImmutableBiMap.Builder<>();
-        int i = 0;
-        for (T node : nodes) {
-            builder.put(node, i);
-            i++;
-        }
-        this.ordering = builder.build();
+        this.ordering = enumerateVertices(nodes);
     }
 
     ImmutableSet<Cycle<T, ATTACHMENT>> findCircuits() {
@@ -168,5 +162,15 @@ class CycleFinder<T, ATTACHMENT> {
 
     private boolean isBlocked(T key) {
         return Boolean.TRUE.equals(blocked.get(key));
+    }
+
+    private ImmutableBiMap<T, Integer> enumerateVertices(Set<T> nodes) {
+        ImmutableBiMap.Builder<T, Integer> builder = new ImmutableBiMap.Builder<>();
+        int i = 0;
+        for (T node : nodes) {
+            builder.put(node, i);
+            i++;
+        }
+        return builder.build();
     }
 }
