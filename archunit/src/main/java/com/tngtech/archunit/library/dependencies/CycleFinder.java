@@ -30,7 +30,6 @@ class CycleFinder<T, ATTACHMENT> {
     private HashMap<T, Boolean> blocked = new HashMap<>();
 
     private HashMap<Integer, LinkedList<Integer>> b = new HashMap<>();
-    private ArrayDeque<Integer> circuitStack = new ArrayDeque<>();
     private ArrayDeque<Edge<T, ATTACHMENT>> edgeStack = new ArrayDeque<>();
     private HashSet<List<Edge<T, ATTACHMENT>>> circuits = new HashSet<>();
 
@@ -92,7 +91,6 @@ class CycleFinder<T, ATTACHMENT> {
 
     private boolean circuit(int v, HashSet<T> component, Optional<Edge<T, ATTACHMENT>> edge) {
         boolean result = false;
-        circuitStack.push(v);
         if (edge.isPresent()) {
             edgeStack.push(edge.get());
         }
@@ -101,15 +99,9 @@ class CycleFinder<T, ATTACHMENT> {
 
         for (Edge<T, ATTACHMENT> w : getAdjacents(component, v)) {
             if (w.getTo().equals(ordering.inverse().get(s.get()))) {
-                ImmutableList.Builder<T> builder = new ImmutableList.Builder<>();
                 ImmutableList.Builder<Edge<T, ATTACHMENT>> edgeBuilder = new ImmutableList.Builder<>();
-                ArrayDeque<Integer> clone = circuitStack.clone();
                 ArrayDeque<Edge<T, ATTACHMENT>> edgeClone = edgeStack.clone();
-                clone.push(s.get());
                 edgeClone.push(w);
-                while (!clone.isEmpty()) {
-                    builder.add(ordering.inverse().get(clone.pop()));
-                }
                 while (!edgeClone.isEmpty()) {
                     edgeBuilder.add(edgeClone.pop());
                 }
@@ -137,7 +129,6 @@ class CycleFinder<T, ATTACHMENT> {
             }
         }
 
-        circuitStack.pop();
         if (edge.isPresent()) {
             edgeStack.pop();
         }
