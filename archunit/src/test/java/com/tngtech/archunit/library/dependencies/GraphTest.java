@@ -111,7 +111,7 @@ public class GraphTest {
             addCycles(graph, cycle2);
             addCrossLink(graph, cycle, cycle2);
         }
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1; i++) {
 
             Set<Cycle<String, String>> cycles = graph.getCycles();
         }

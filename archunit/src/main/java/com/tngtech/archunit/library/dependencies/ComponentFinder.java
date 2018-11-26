@@ -24,20 +24,18 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class ComponentFinder<T, ATTACHMENT> {
-    private LinkedList<Vertex<T>> nodes2 = new LinkedList<>();
-    private Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges;
+    private LinkedList<Vertex<T, ATTACHMENT>> nodes2 = new LinkedList<>();
     private ImmutableBiMap<T, Integer> ordering;
     private final HashSet<HashSet<T>> components = new HashSet<>();
-    private final ArrayDeque<Vertex<T>> stack = new ArrayDeque<>();
+    private final ArrayDeque<Vertex<T, ATTACHMENT>> stack = new ArrayDeque<>();
     private final AtomicInteger index = new AtomicInteger(-1);
-    private ImmutableMap<T, Vertex<T>> vertices;
+    private ImmutableMap<T, Vertex<T, ATTACHMENT>> vertices;
 
     ComponentFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges, ImmutableBiMap<T, Integer> ordering) {
-        this.outgoingEdges = outgoingEdges;
         this.ordering = ordering;
-        ImmutableMap.Builder<T, Vertex<T>> builder = new ImmutableMap.Builder<T, Vertex<T>>();
+        ImmutableMap.Builder<T, Vertex<T, ATTACHMENT>> builder = new ImmutableMap.Builder<>();
         for (T node : nodes) {
-            Vertex<T> vertex = new Vertex<>(node, ordering.get(node));
+            Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), outgoingEdges.get(node));
             nodes2.add(vertex);
             builder.put(node, vertex);
         }
@@ -74,7 +72,7 @@ class ComponentFinder<T, ATTACHMENT> {
 
 
     HashSet<HashSet<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
-        for (Vertex<T> node : nodes2) {
+        for (Vertex<T, ATTACHMENT> node : nodes2) {
             if ((node.getIndex()==null) && node.getOrder()>=i) {
                 scc(node, i);
             }
@@ -82,16 +80,16 @@ class ComponentFinder<T, ATTACHMENT> {
         return components;
     }
 
-    private void scc(Vertex<T> v, int i) {
+    private void scc(Vertex<T, ATTACHMENT> v, int i) {
         int currentIndex = index.incrementAndGet();
         v.setIndex(currentIndex);
         v.setLowLink(currentIndex);
         v.setOnStack(true);
         stack.push(v);
 
-        Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(v.getDatum());
+        Collection<Edge<T, ATTACHMENT>> edges = v.getOutgoingEdges();
         for (Edge<T, ATTACHMENT> edge : edges) {
-            Vertex<T> w = vertices.get(edge.getTo());
+            Vertex<T, ATTACHMENT> w = vertices.get(edge.getTo());
             if (w.getOrder() < i) {
                 continue;
             }
@@ -106,7 +104,7 @@ class ComponentFinder<T, ATTACHMENT> {
         }
 
         if (v.lowLink.equals(v.getIndex())) {
-            Vertex<T> w;
+            Vertex<T, ATTACHMENT> w;
             HashSet<T> component = new HashSet<>();
             do {
                 w = stack.pop();
@@ -117,10 +115,11 @@ class ComponentFinder<T, ATTACHMENT> {
         }
     }
 
-    static class Vertex<T>{
-        Vertex(T datum, Integer order) {
+    static class Vertex<T, ATTACHMENT>{
+        Vertex(T datum, Integer order, Collection<Edge<T, ATTACHMENT>> outgoingEdges) {
             this.datum = datum;
             this.order = order;
+            this.outgoingEdges = outgoingEdges;
         }
 
         T datum;
@@ -162,6 +161,12 @@ class ComponentFinder<T, ATTACHMENT> {
         Integer index;
         Integer lowLink;
         Boolean onStack;
+
+        public Collection<Edge<T, ATTACHMENT>> getOutgoingEdges() {
+            return outgoingEdges;
+        }
+
+        Collection<Edge<T, ATTACHMENT>> outgoingEdges;
     }
 
 }
