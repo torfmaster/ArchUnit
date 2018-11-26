@@ -43,9 +43,19 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
     ImmutableSet<Cycle<T, ATTACHMENT>> findCircuits() {
+        LinkedList<ComponentFinder.Vertex<T, ATTACHMENT>> nodes2 = new LinkedList<>();
+        ImmutableMap.Builder<T, ComponentFinder.Vertex<T, ATTACHMENT>> builder = new ImmutableMap.Builder<>();
+        for (T node : nodes) {
+            ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node), outgoingEdges.get(node));
+            nodes2.add(vertex);
+            builder.put(node, vertex);
+        }
+        ImmutableMap<T, ComponentFinder.Vertex<T, ATTACHMENT>> build = builder.build();
+
+
         int size = nodes.size();
         while (s.get() < size) {
-            Optional<HashSet<T>> mininmalStronglyConnectedComponent = new ComponentFinder<>(nodes, outgoingEdges, ordering).findLeastScc(s.get());
+            Optional<HashSet<T>> mininmalStronglyConnectedComponent = new ComponentFinder<>(build, ordering, nodes2).findLeastScc(s.get());
             if (mininmalStronglyConnectedComponent.isPresent()) {
                 HashSet<T> minimalComponent = mininmalStronglyConnectedComponent.get();
                 Optional<Integer> min = getMinimalVertexIndex(minimalComponent);

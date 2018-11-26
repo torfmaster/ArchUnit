@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class ComponentFinder<T, ATTACHMENT> {
-    private LinkedList<Vertex<T, ATTACHMENT>> nodes2 = new LinkedList<>();
+    private LinkedList<Vertex<T, ATTACHMENT>> nodes2;
     private ImmutableBiMap<T, Integer> ordering;
     private final HashSet<HashSet<T>> components = new HashSet<>();
     private final ArrayDeque<Vertex<T, ATTACHMENT>> stack = new ArrayDeque<>();
@@ -33,13 +33,26 @@ class ComponentFinder<T, ATTACHMENT> {
 
     ComponentFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges, ImmutableBiMap<T, Integer> ordering) {
         this.ordering = ordering;
+        LinkedList<Vertex<T, ATTACHMENT>> nodes2 = new LinkedList<>();
         ImmutableMap.Builder<T, Vertex<T, ATTACHMENT>> builder = new ImmutableMap.Builder<>();
         for (T node : nodes) {
             Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), outgoingEdges.get(node));
             nodes2.add(vertex);
             builder.put(node, vertex);
         }
-        vertices=builder.build();
+        this.nodes2=nodes2;
+        vertices = builder.build();
+    }
+
+    ComponentFinder(ImmutableMap<T, Vertex<T, ATTACHMENT>> vertices, ImmutableBiMap<T, Integer> ordering, LinkedList<Vertex<T, ATTACHMENT>> nodes2) {
+        this.vertices = vertices;
+        this.ordering = ordering;
+        this.nodes2 = nodes2;
+        for (Vertex<T, ATTACHMENT> tattachmentVertex : nodes2) {
+            tattachmentVertex.setOnStack(false);
+            tattachmentVertex.lowLink=null;
+            tattachmentVertex.index=null;
+        }
     }
 
     Optional<HashSet<T>> findLeastScc(int i) {
@@ -73,14 +86,14 @@ class ComponentFinder<T, ATTACHMENT> {
 
     HashSet<HashSet<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
         for (Vertex<T, ATTACHMENT> node : nodes2) {
-            if ((node.getIndex()==null) && node.getOrder()>=i) {
+            if ((node.getIndex() == null) && node.getOrder() >= i) {
                 scc(node, i);
             }
         }
         return components;
     }
 
-    private void scc(Vertex<T, ATTACHMENT> v, int i) {
+    private boolean scc(Vertex<T, ATTACHMENT> v, int i) {
         int currentIndex = index.incrementAndGet();
         v.setIndex(currentIndex);
         v.setLowLink(currentIndex);
@@ -93,11 +106,13 @@ class ComponentFinder<T, ATTACHMENT> {
             if (w.getOrder() < i) {
                 continue;
             }
-            if ((w.getIndex()==null)) {
-                scc(w, i);
+            if ((w.getIndex() == null)) {
+                if (scc(w, i)){
+                    return true;
+                };
                 int min = Math.min(v.getLowLink(), w.getLowLink());
                 v.setLowLink(min);
-            } else if ( !(w.onStack==null) && w.onStack) {
+            } else if (!(w.onStack == null) && w.onStack) {
                 int min = Math.min(w.getIndex(), v.getLowLink());
                 v.setLowLink(min);
             }
@@ -105,17 +120,25 @@ class ComponentFinder<T, ATTACHMENT> {
 
         if (v.lowLink.equals(v.getIndex())) {
             Vertex<T, ATTACHMENT> w;
+            boolean minimumAchieved = false;
             HashSet<T> component = new HashSet<>();
             do {
                 w = stack.pop();
+                if (w.getOrder().equals(i)) {
+                    minimumAchieved=true;
+                }
                 w.setOnStack(false);
                 component.add(w.getDatum());
             } while (!v.equals(w));
             components.add(component);
+            if (minimumAchieved){
+                return true;
+            }
         }
+        return false;
     }
 
-    static class Vertex<T, ATTACHMENT>{
+    public static class Vertex<T, ATTACHMENT> {
         Vertex(T datum, Integer order, Collection<Edge<T, ATTACHMENT>> outgoingEdges) {
             this.datum = datum;
             this.order = order;
