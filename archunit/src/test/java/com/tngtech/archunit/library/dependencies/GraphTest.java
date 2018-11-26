@@ -1,6 +1,7 @@
 package com.tngtech.archunit.library.dependencies;
 
 import com.google.common.collect.ImmutableSet;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -94,6 +95,27 @@ public class GraphTest {
         Set<Cycle<String, String>> cycles = graph.getCycles();
 
         assertThat(cycles).containsOnly(threeElements, fourElements, fiveElements);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void performance() {
+
+
+
+
+        for (int i = 0; i < 5; i++) {
+            Graph<String, String> graph = new Graph<>();
+            for (int j = 0; i < 10; i++) {
+                Cycle<String, String> cycle = randomCycle(100);
+                Cycle<String, String> cycle2 = randomCycle(10);
+                addCycles(graph, cycle);
+                addCycles(graph, cycle2);
+                addCrossLink(graph, cycle, cycle2);
+            }
+            Set<Cycle<String, String>> cycles = graph.getCycles();
+        }
+
     }
 
     @Test

@@ -17,26 +17,31 @@ package com.tngtech.archunit.library.dependencies;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableBiMap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class ComponentFinder<T, ATTACHMENT> {
-    private Set<T> nodes;
+    private Set<Vertex<T>> nodes2 = new HashSet<>();
     private Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges;
     private ImmutableBiMap<T, Integer> ordering;
     private final HashSet<HashSet<T>> components = new HashSet<>();
-    private final ArrayDeque<T> stack = new ArrayDeque<>();
-    private final HashMap<T, Integer> indices = new HashMap<>();
-    private final HashMap<T, Integer> lowLinks = new HashMap<>();
-    private final HashMap<T, Boolean> onStack = new HashMap<>();
+    private final ArrayDeque<Vertex<T>> stack = new ArrayDeque<>();
     private final AtomicInteger index = new AtomicInteger(-1);
+    private ImmutableMap<T, Vertex<T>> vertices;
 
     ComponentFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges, ImmutableBiMap<T, Integer> ordering) {
-        this.nodes = nodes;
         this.outgoingEdges = outgoingEdges;
         this.ordering = ordering;
+        ImmutableBiMap.Builder<T, Vertex<T>> builder = new ImmutableBiMap.Builder<>();
+        for (T node : nodes) {
+            Vertex<T> vertex = new Vertex<>(node, ordering.get(node));
+            nodes2.add(vertex);
+            builder.put(node, vertex);
+        }
+        vertices=builder.build();
     }
 
     Optional<HashSet<T>> findLeastScc(int i) {
@@ -69,47 +74,89 @@ class ComponentFinder<T, ATTACHMENT> {
 
 
     HashSet<HashSet<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
-        for (T node : nodes) {
-            if (!indices.containsKey(node) && ordering.get(node) >= i) {
+        for (Vertex<T> node : nodes2) {
+            if ((node.getIndex()==null) && node.getOrder()>=i) {
                 scc(node, i);
             }
         }
         return components;
     }
 
-    private void scc(T v, int i) {
+    private void scc(Vertex<T> v, int i) {
         int currentIndex = index.incrementAndGet();
-        indices.put(v, currentIndex);
-        lowLinks.put(v, currentIndex);
-        onStack.put(v, true);
+        v.setIndex(currentIndex);
+        v.setLowLink(currentIndex);
+        v.setOnStack(true);
         stack.push(v);
 
-        Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(v);
+        Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(v.getDatum());
         for (Edge<T, ATTACHMENT> edge : edges) {
-            T w = edge.getTo();
-            if (ordering.get(w) < i) {
+            Vertex<T> w = vertices.get(edge.getTo());
+            if (ordering.get(w.getDatum()) < i) {
                 continue;
             }
-            if (!indices.containsKey(w)) {
+            if ((w.getIndex()==null)) {
                 scc(w, i);
-                int min = Math.min(lowLinks.get(v), lowLinks.get(w));
-                lowLinks.put(v, min);
-            } else if (onStack.containsKey(w) && onStack.get(w)) {
-                int min = Math.min(indices.get(w), lowLinks.get(v));
-                lowLinks.put(v, min);
+                int min = Math.min(v.getLowLink(), w.getLowLink());
+                v.setLowLink(min);
+            } else if ( !(w.onStack==null) && w.onStack) {
+                int min = Math.min(w.getIndex(), v.getLowLink());
+                v.setLowLink(min);
             }
         }
 
-        if (lowLinks.get(v).equals(indices.get(v))) {
-            T w;
+        if (v.lowLink.equals(v.getIndex())) {
+            Vertex<T> w;
             HashSet<T> component = new HashSet<>();
             do {
                 w = stack.pop();
-                onStack.put(w, false);
-                component.add(w);
+                w.setOnStack(false);
+                component.add(w.getDatum());
             } while (!v.equals(w));
             components.add(component);
         }
+    }
+
+    static class Vertex<T>{
+        Vertex(T datum, Integer order) {
+            this.datum = datum;
+            this.order = order;
+        }
+
+        T datum;
+        Integer order;
+
+        T getDatum() {
+            return datum;
+        }
+
+        Integer getOrder() {
+            return order;
+        }
+
+        Integer getIndex() {
+            return index;
+        }
+
+        void setIndex(Integer index) {
+            this.index = index;
+        }
+
+        Integer getLowLink() {
+            return lowLink;
+        }
+
+        void setLowLink(Integer lowLink) {
+            this.lowLink = lowLink;
+        }
+
+        void setOnStack(Boolean onStack) {
+            this.onStack = onStack;
+        }
+
+        Integer index;
+        Integer lowLink;
+        Boolean onStack;
     }
 
 }
