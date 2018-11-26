@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class ComponentFinder<T, ATTACHMENT> {
-    private Set<Vertex<T>> nodes2 = new HashSet<>();
+    private LinkedList<Vertex<T>> nodes2 = new LinkedList<>();
     private Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges;
     private ImmutableBiMap<T, Integer> ordering;
     private final HashSet<HashSet<T>> components = new HashSet<>();
@@ -35,7 +35,7 @@ class ComponentFinder<T, ATTACHMENT> {
     ComponentFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges, ImmutableBiMap<T, Integer> ordering) {
         this.outgoingEdges = outgoingEdges;
         this.ordering = ordering;
-        ImmutableBiMap.Builder<T, Vertex<T>> builder = new ImmutableBiMap.Builder<>();
+        ImmutableMap.Builder<T, Vertex<T>> builder = new ImmutableMap.Builder<T, Vertex<T>>();
         for (T node : nodes) {
             Vertex<T> vertex = new Vertex<>(node, ordering.get(node));
             nodes2.add(vertex);
@@ -92,7 +92,7 @@ class ComponentFinder<T, ATTACHMENT> {
         Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(v.getDatum());
         for (Edge<T, ATTACHMENT> edge : edges) {
             Vertex<T> w = vertices.get(edge.getTo());
-            if (ordering.get(w.getDatum()) < i) {
+            if (w.getOrder() < i) {
                 continue;
             }
             if ((w.getIndex()==null)) {
@@ -124,6 +124,11 @@ class ComponentFinder<T, ATTACHMENT> {
         }
 
         T datum;
+
+        public Boolean getOnStack() {
+            return onStack;
+        }
+
         Integer order;
 
         T getDatum() {
