@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 class ComponentFinder<T, ATTACHMENT> {
     private LinkedList<Vertex<T, ATTACHMENT>> nodes2;
     private ImmutableBiMap<T, Integer> ordering;
-    private final HashSet<HashSet<T>> components = new HashSet<>();
+    private final HashSet<LinkedList<T>> components = new HashSet<LinkedList<T>>();
     private final ArrayDeque<Vertex<T, ATTACHMENT>> stack = new ArrayDeque<>();
     private final AtomicInteger index = new AtomicInteger(-1);
     private ImmutableMap<T, Vertex<T, ATTACHMENT>> vertices;
@@ -36,7 +36,8 @@ class ComponentFinder<T, ATTACHMENT> {
         LinkedList<Vertex<T, ATTACHMENT>> nodes2 = new LinkedList<>();
         ImmutableMap.Builder<T, Vertex<T, ATTACHMENT>> builder = new ImmutableMap.Builder<>();
         for (T node : nodes) {
-            Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), outgoingEdges.get(node));
+
+            Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), new LinkedList<>(outgoingEdges.get(node)));
             nodes2.add(vertex);
             builder.put(node, vertex);
         }
@@ -55,11 +56,11 @@ class ComponentFinder<T, ATTACHMENT> {
         }
     }
 
-    Optional<HashSet<T>> findLeastScc(int i) {
-        HashSet<HashSet<T>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(i);
-        Optional<HashSet<T>> chosen = Optional.absent();
+    Optional<LinkedList<T>> findLeastScc(int i) {
+        HashSet<LinkedList<T>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(i);
+        Optional<LinkedList<T>> chosen = Optional.absent();
         Optional<Integer> globalMin = Optional.absent();
-        for (HashSet<T> stronglyConncectedComponent : stronglyConnectedComponents) {
+        for (LinkedList<T> stronglyConncectedComponent : stronglyConnectedComponents) {
             Optional<Integer> min = Optional.absent();
             for (T t : stronglyConncectedComponent) {
                 if (!min.isPresent()) {
@@ -84,7 +85,7 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
 
-    HashSet<HashSet<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
+    HashSet<LinkedList<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
         for (Vertex<T, ATTACHMENT> node : nodes2) {
             if ((node.getIndex() == null) && node.getOrder() >= i) {
                 scc(node, i);
@@ -121,7 +122,7 @@ class ComponentFinder<T, ATTACHMENT> {
         if (v.lowLink.equals(v.getIndex())) {
             Vertex<T, ATTACHMENT> w;
             boolean minimumAchieved = false;
-            HashSet<T> component = new HashSet<>();
+            LinkedList<T> component = new LinkedList<>();
             do {
                 w = stack.pop();
                 if (w.getOrder().equals(i)) {

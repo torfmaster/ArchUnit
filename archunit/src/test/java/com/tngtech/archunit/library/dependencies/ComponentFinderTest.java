@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +27,7 @@ public class ComponentFinderTest {
         builder.put(nodeB, 1);
         builder.put(nodeC, 2);
 
-        HashSet<HashSet<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
+        HashSet<LinkedList<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
         assertThat(sccs).hasSize(3);
     }
 
@@ -45,7 +46,7 @@ public class ComponentFinderTest {
         builder.put(nodeB, 1);
         builder.put(nodeC, 2);
 
-        HashSet<HashSet<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
+        HashSet<LinkedList<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
         assertThat(sccs).hasSize(1);
     }
 }

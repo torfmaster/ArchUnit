@@ -55,9 +55,9 @@ class CycleFinder<T, ATTACHMENT> {
 
         int size = nodes.size();
         while (s.get() < size) {
-            Optional<HashSet<T>> mininmalStronglyConnectedComponent = new ComponentFinder<>(build, ordering, nodes2).findLeastScc(s.get());
+            Optional<LinkedList<T>> mininmalStronglyConnectedComponent = new ComponentFinder<>(build, ordering, nodes2).findLeastScc(s.get());
             if (mininmalStronglyConnectedComponent.isPresent()) {
-                HashSet<T> minimalComponent = mininmalStronglyConnectedComponent.get();
+                LinkedList<T> minimalComponent = mininmalStronglyConnectedComponent.get();
                 Optional<Integer> min = getMinimalVertexIndex(minimalComponent);
                 if (min.isPresent()) {
                     s.set(min.get());
@@ -86,7 +86,7 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
 
-    private boolean circuit(int vIndex, HashSet<T> component, Optional<Edge<T, ATTACHMENT>> edge) {
+    private boolean circuit(int vIndex, LinkedList<T> component, Optional<Edge<T, ATTACHMENT>> edge) {
         boolean circuitFound = false;
         if (edge.isPresent()) {
             edgeStack.push(edge.get());
@@ -135,7 +135,7 @@ class CycleFinder<T, ATTACHMENT> {
         return circuitFound;
     }
 
-    private ImmutableSet<Edge<T, ATTACHMENT>> getAdjacents(final HashSet<T> component, final int v) {
+    private ImmutableSet<Edge<T, ATTACHMENT>> getAdjacents(final LinkedList<T> component, final int v) {
         return FluentIterable.from(
                 outgoingEdges.get(ordering.inverse().get(v)))
                 .filter(new Predicate<Edge<T, ATTACHMENT>>() {
@@ -180,7 +180,7 @@ class CycleFinder<T, ATTACHMENT> {
         return builder.build();
     }
 
-    private Optional<Integer> getMinimalVertexIndex(HashSet<T> minimalComponent) {
+    private Optional<Integer> getMinimalVertexIndex(LinkedList<T> minimalComponent) {
         Optional<Integer> min = Optional.absent();
         for (T t : minimalComponent) {
             if (!min.isPresent()) {

@@ -5,6 +5,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
@@ -104,18 +105,63 @@ public class GraphTest {
 
 
         Graph<String, String> graph = new Graph<>();
-        for (int j = 0; j < 20; j++) {
-            Cycle<String, String> cycle = randomCycle(100);
-            Cycle<String, String> cycle2 = randomCycle(100);
+        for (int j = 0; j < 500; j++) {
+            Cycle<String, String> cycle = randomCycle(10);
+            Cycle<String, String> cycle2 = randomCycle(10);
             addCycles(graph, cycle);
             addCycles(graph, cycle2);
             addCrossLink(graph, cycle, cycle2);
         }
+
+
         for (int i = 0; i < 1; i++) {
 
             Set<Cycle<String, String>> cycles = graph.getCycles();
         }
 
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void performanceRandom() {
+
+
+        Graph<String, String> graph = randomGraph();
+
+        for (int i = 0; i < 1; i++) {
+
+            Set<Cycle<String, String>> cycles = graph.getCycles();
+        }
+
+    }
+
+    private Graph<String, String> randomGraph() {
+        Graph<String, String> graph = new Graph<>();
+        graph.add(randomNode(), ImmutableSet.<Edge<String, String>>of());
+
+        for (int i=0; i<20000;i++){
+            String node = randomNode();
+            graph.add(node, ImmutableSet.<Edge<String, String>>of(new SimpleEdge(node,randomElenent(graph.getNodes()))));
+
+        }
+        return graph;
+
+    }
+
+    private String randomElenent(Set<String> nodes) {
+
+
+        int size = nodes.size();
+        int item = new Random().nextInt(size); // In real life, the Random object should be rather more shared than this
+        int i = 0;
+        for(String obj : nodes)
+        {
+            if (i == item)
+                return obj;
+            i++;
+        }
+
+        return null;
     }
 
     @Test
