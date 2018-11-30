@@ -1,11 +1,9 @@
 package com.tngtech.archunit.library.dependencies;
 
 import com.google.common.collect.ImmutableSet;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
@@ -103,7 +101,6 @@ public class GraphTest {
     public void performance() {
 
 
-
         Graph<String, String> graph = new Graph<>();
         for (int j = 0; j < 500; j++) {
             Cycle<String, String> cycle = randomCycle(10);
@@ -139,9 +136,9 @@ public class GraphTest {
         Graph<String, String> graph = new Graph<>();
         graph.add(randomNode(), ImmutableSet.<Edge<String, String>>of());
 
-        for (int i=0; i<20000;i++){
+        for (int i = 0; i < 20000; i++) {
             String node = randomNode();
-            graph.add(node, ImmutableSet.<Edge<String, String>>of(new SimpleEdge(node,randomElenent(graph.getNodes()))));
+            graph.add(node, ImmutableSet.<Edge<String, String>>of(new SimpleEdge(node, randomElenent(graph.getNodes()))));
 
         }
         return graph;
@@ -154,8 +151,7 @@ public class GraphTest {
         int size = nodes.size();
         int item = new Random().nextInt(size); // In real life, the Random object should be rather more shared than this
         int i = 0;
-        for(String obj : nodes)
-        {
+        for (String obj : nodes) {
             if (i == item)
                 return obj;
             i++;
