@@ -98,11 +98,11 @@ public class GraphTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void performance() {
-
+    public void performance_chain() {
+    // 200x10x5
 
         Graph<String, String> graph = new Graph<>();
-        for (int j = 0; j < 500; j++) {
+        for (int j = 0; j < 200; j++) {
             Cycle<String, String> cycle = randomCycle(10);
             Cycle<String, String> cycle2 = randomCycle(10);
             addCycles(graph, cycle);
@@ -111,7 +111,7 @@ public class GraphTest {
         }
 
 
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < 5; i++) {
 
             Set<Cycle<String, String>> cycles = graph.getCycles();
         }
@@ -120,23 +120,54 @@ public class GraphTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void performanceRandom() {
+    public void performance_star_alternating() {
+
+        Graph<String, String> graph = new Graph<>();
+        Cycle<String, String> cycle = randomCycle(10);
+        addCycles(graph, cycle);
 
 
-        Graph<String, String> graph = randomGraph();
+        for (int j = 0; j < 500; j++) {
+            Cycle<String, String> cycle2 = randomCycle(10);
+            addCycles(graph, cycle2);
+            if (j%2==0){
+                addCrossLink(graph, cycle, cycle2);
+            }
+            else
+            {
+                addCrossLink(graph, cycle2, cycle);
 
-        for (int i = 0; i < 1; i++) {
+            }
+        }
+
+
+        for (int i = 0; i < 5; i++) {
 
             Set<Cycle<String, String>> cycles = graph.getCycles();
         }
 
     }
 
-    private Graph<String, String> randomGraph() {
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void performanceRandom() {
+
+
+        Graph<String, String> graph = randomGraph(5000);
+
+        for (int i = 0; i < 5; i++) {
+
+            Set<Cycle<String, String>> cycles = graph.getCycles();
+        }
+
+    }
+
+    private Graph<String, String> randomGraph(int size) {
         Graph<String, String> graph = new Graph<>();
         graph.add(randomNode(), ImmutableSet.<Edge<String, String>>of());
 
-        for (int i = 0; i < 20000; i++) {
+        for (int i = 0; i < size; i++) {
             String node = randomNode();
             graph.add(node, ImmutableSet.<Edge<String, String>>of(new SimpleEdge(node, randomElenent(graph.getNodes()))));
 

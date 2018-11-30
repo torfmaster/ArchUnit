@@ -46,7 +46,8 @@ class CycleFinder<T, ATTACHMENT> {
         LinkedList<ComponentFinder.Vertex<T, ATTACHMENT>> nodes2 = new LinkedList<>();
         ImmutableMap.Builder<T, ComponentFinder.Vertex<T, ATTACHMENT>> builder = new ImmutableMap.Builder<>();
         for (T node : nodes) {
-            ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node), outgoingEdges.get(node));
+            ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node),
+                    new ArrayList<>(outgoingEdges.get(node)));
             nodes2.add(vertex);
             builder.put(node, vertex);
         }
