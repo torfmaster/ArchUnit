@@ -24,28 +24,28 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class ComponentFinder<T, ATTACHMENT> {
-    private LinkedList<Vertex<T, ATTACHMENT>> nodes2;
+    private ArrayList<Vertex<T, ATTACHMENT>> nodes2;
     private ImmutableBiMap<T, Integer> ordering;
-    private final HashSet<LinkedList<T>> components = new HashSet<LinkedList<T>>();
+    private final HashSet<ArrayList<T>> components = new HashSet<ArrayList<T>>();
     private final ArrayDeque<Vertex<T, ATTACHMENT>> stack = new ArrayDeque<>();
     private final AtomicInteger index = new AtomicInteger(-1);
-    private ImmutableMap<T, Vertex<T, ATTACHMENT>> vertices;
+    private HashMap<T, Vertex<T, ATTACHMENT>> vertices;
 
     ComponentFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges, ImmutableBiMap<T, Integer> ordering) {
         this.ordering = ordering;
-        LinkedList<Vertex<T, ATTACHMENT>> nodes2 = new LinkedList<>();
-        ImmutableMap.Builder<T, Vertex<T, ATTACHMENT>> builder = new ImmutableMap.Builder<>();
+        ArrayList<Vertex<T, ATTACHMENT>> nodes2 = new ArrayList<>();
+        HashMap<T, Vertex<T, ATTACHMENT>> builder = new HashMap<>();
         for (T node : nodes) {
 
-            Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), new LinkedList<>(outgoingEdges.get(node)));
+            Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), new ArrayList<>(outgoingEdges.get(node)));
             nodes2.add(vertex);
             builder.put(node, vertex);
         }
         this.nodes2=nodes2;
-        vertices = builder.build();
+        vertices = builder;
     }
 
-    ComponentFinder(ImmutableMap<T, Vertex<T, ATTACHMENT>> vertices, ImmutableBiMap<T, Integer> ordering, LinkedList<Vertex<T, ATTACHMENT>> nodes2) {
+    ComponentFinder(HashMap<T, Vertex<T, ATTACHMENT>> vertices, ImmutableBiMap<T, Integer> ordering, ArrayList<Vertex<T, ATTACHMENT>> nodes2) {
         this.vertices = vertices;
         this.ordering = ordering;
         this.nodes2 = nodes2;
@@ -56,11 +56,11 @@ class ComponentFinder<T, ATTACHMENT> {
         }
     }
 
-    Optional<LinkedList<T>> findLeastScc(int i) {
-        HashSet<LinkedList<T>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(i);
-        Optional<LinkedList<T>> chosen = Optional.absent();
+    Optional<ArrayList<T>> findLeastScc(int i) {
+        HashSet<ArrayList<T>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(i);
+        Optional<ArrayList<T>> chosen = Optional.absent();
         Optional<Integer> globalMin = Optional.absent();
-        for (LinkedList<T> stronglyConncectedComponent : stronglyConnectedComponents) {
+        for (ArrayList<T> stronglyConncectedComponent : stronglyConnectedComponents) {
             Optional<Integer> min = Optional.absent();
             for (T t : stronglyConncectedComponent) {
                 if (!min.isPresent()) {
@@ -85,7 +85,7 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
 
-    HashSet<LinkedList<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
+    HashSet<ArrayList<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
         for (Vertex<T, ATTACHMENT> node : nodes2) {
             if ((node.getIndex() == null) && node.getOrder() >= i) {
                 scc(node, i);
@@ -122,7 +122,7 @@ class ComponentFinder<T, ATTACHMENT> {
         if (v.lowLink.equals(v.getIndex())) {
             Vertex<T, ATTACHMENT> w;
             boolean minimumAchieved = false;
-            LinkedList<T> component = new LinkedList<>();
+            ArrayList<T> component = new ArrayList<>();
             do {
                 w = stack.pop();
                 if (w.getOrder().equals(i)) {

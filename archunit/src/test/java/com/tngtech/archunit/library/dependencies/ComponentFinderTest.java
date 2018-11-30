@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableBiMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -27,7 +28,7 @@ public class ComponentFinderTest {
         builder.put(nodeB, 1);
         builder.put(nodeC, 2);
 
-        HashSet<LinkedList<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
+        HashSet<ArrayList<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
         assertThat(sccs).hasSize(3);
     }
 
@@ -46,7 +47,7 @@ public class ComponentFinderTest {
         builder.put(nodeB, 1);
         builder.put(nodeC, 2);
 
-        HashSet<LinkedList<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
+        HashSet<ArrayList<String>> sccs = new ComponentFinder<>(graph.getNodes(), graph.getOutgoingEdges(), builder.build()).getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(0);
         assertThat(sccs).hasSize(1);
     }
 }

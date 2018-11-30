@@ -29,7 +29,7 @@ class CycleFinder<T, ATTACHMENT> {
     private ImmutableBiMap<T, Integer> ordering;
     private HashMap<T, Boolean> blocked = new HashMap<>();
 
-    private HashMap<Integer, LinkedList<Integer>> blockedBy = new HashMap<>();
+    private HashMap<Integer, ArrayList<Integer>> blockedBy = new HashMap<>();
     private ArrayDeque<Edge<T, ATTACHMENT>> edgeStack = new ArrayDeque<>();
     private HashSet<List<Edge<T, ATTACHMENT>>> circuits = new HashSet<>();
 
@@ -43,28 +43,27 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
     ImmutableSet<Cycle<T, ATTACHMENT>> findCircuits() {
-        LinkedList<ComponentFinder.Vertex<T, ATTACHMENT>> nodes2 = new LinkedList<>();
-        ImmutableMap.Builder<T, ComponentFinder.Vertex<T, ATTACHMENT>> builder = new ImmutableMap.Builder<>();
+        ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> nodes2 = new ArrayList<>();
+        HashMap<T, ComponentFinder.Vertex<T, ATTACHMENT>> builder = new HashMap<>();
         for (T node : nodes) {
             ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node),
                     new ArrayList<>(outgoingEdges.get(node)));
             nodes2.add(vertex);
             builder.put(node, vertex);
         }
-        ImmutableMap<T, ComponentFinder.Vertex<T, ATTACHMENT>> build = builder.build();
 
 
         int size = nodes.size();
         while (s.get() < size) {
-            Optional<LinkedList<T>> mininmalStronglyConnectedComponent = new ComponentFinder<>(build, ordering, nodes2).findLeastScc(s.get());
+            Optional<ArrayList<T>> mininmalStronglyConnectedComponent = new ComponentFinder<T, ATTACHMENT>(builder, ordering, nodes2).findLeastScc(s.get());
             if (mininmalStronglyConnectedComponent.isPresent()) {
-                LinkedList<T> minimalComponent = mininmalStronglyConnectedComponent.get();
+                ArrayList<T> minimalComponent = mininmalStronglyConnectedComponent.get();
                 Optional<Integer> min = getMinimalVertexIndex(minimalComponent);
                 if (min.isPresent()) {
                     s.set(min.get());
                     for (T t : minimalComponent) {
                         blocked.put(t, false);
-                        blockedBy.put(ordering.get(t), new LinkedList<Integer>());
+                        blockedBy.put(ordering.get(t), new ArrayList<Integer>());
                     }
                     circuit(s.get(), minimalComponent, Optional.<Edge<T, ATTACHMENT>>absent());
                     s.addAndGet(1);
@@ -87,7 +86,7 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
 
-    private boolean circuit(int vIndex, LinkedList<T> component, Optional<Edge<T, ATTACHMENT>> edge) {
+    private boolean circuit(int vIndex, ArrayList<T> component, Optional<Edge<T, ATTACHMENT>> edge) {
         boolean circuitFound = false;
         if (edge.isPresent()) {
             edgeStack.push(edge.get());
@@ -120,7 +119,7 @@ class CycleFinder<T, ATTACHMENT> {
             for (Edge<T, ATTACHMENT> w : getAdjacents(component, vIndex)) {
                 Integer indexOfW = ordering.get(w.getTo());
                 if (!blockedBy.containsKey(indexOfW)) {
-                    LinkedList<Integer> integers = new LinkedList<>();
+                    ArrayList<Integer> integers = new ArrayList<>();
                     integers.add(vIndex);
                     blockedBy.put(indexOfW, integers);
                 } else if (!blockedBy.get(indexOfW).contains(vIndex)) {
@@ -136,7 +135,7 @@ class CycleFinder<T, ATTACHMENT> {
         return circuitFound;
     }
 
-    private ImmutableSet<Edge<T, ATTACHMENT>> getAdjacents(final LinkedList<T> component, final int v) {
+    private ImmutableSet<Edge<T, ATTACHMENT>> getAdjacents(final ArrayList<T> component, final int v) {
         return FluentIterable.from(
                 outgoingEdges.get(ordering.inverse().get(v)))
                 .filter(new Predicate<Edge<T, ATTACHMENT>>() {
@@ -156,7 +155,7 @@ class CycleFinder<T, ATTACHMENT> {
     private void unblock(int s) {
         blocked.put(ordering.inverse().get(s), false);
         if (blockedBy.containsKey(s)) {
-            LinkedList<Integer> elements = blockedBy.get(s);
+            ArrayList<Integer> elements = blockedBy.get(s);
             List<Integer> nodesForS = ImmutableList.copyOf(elements);
             for (Integer node : nodesForS) {
                 elements.remove(node);
@@ -181,7 +180,7 @@ class CycleFinder<T, ATTACHMENT> {
         return builder.build();
     }
 
-    private Optional<Integer> getMinimalVertexIndex(LinkedList<T> minimalComponent) {
+    private Optional<Integer> getMinimalVertexIndex(ArrayList<T> minimalComponent) {
         Optional<Integer> min = Optional.absent();
         for (T t : minimalComponent) {
             if (!min.isPresent()) {
