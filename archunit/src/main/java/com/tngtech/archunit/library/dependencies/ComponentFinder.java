@@ -55,12 +55,12 @@ class ComponentFinder<T, ATTACHMENT> {
         index.set(-1);
         components.clear();
         stack.clear();
-        for (int i = start; i < substituteList.size(); i++) {
+        /*for (int i = start; i < substituteList.size(); i++) {
             Vertex<T, ATTACHMENT> tattachmentVertex = substituteList.get(i);
             //tattachmentVertex.setOnStack(false);
             //tattachmentVertex.lowLink=null;
-            tattachmentVertex.index=null;
-        }
+            //tattachmentVertex.index=null;
+        }*/
     }
 
     Optional<ArrayList<T>> findLeastScc(int i) {
@@ -138,6 +138,7 @@ class ComponentFinder<T, ATTACHMENT> {
                     minimumAchieved=true;
                 }
                 w.setOnStack(false);
+                w.setIndex(null);
                 component.add(w.getDatum());
             } while (!v.equals(w));
             components.add(component);

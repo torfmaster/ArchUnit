@@ -154,7 +154,7 @@ public class GraphTest {
     public void performanceRandom() {
 
 
-        Graph<String, String> graph = randomGraph(5000);
+        Graph<String, String> graph = randomGraph(50000);
 
         for (int i = 0; i < 5; i++) {
 
