@@ -123,12 +123,12 @@ public class GraphTest {
     public void performance_star_alternating() {
 
         Graph<String, String> graph = new Graph<>();
-        Cycle<String, String> cycle = randomCycle(10);
+        Cycle<String, String> cycle = randomCycle(100);
         addCycles(graph, cycle);
 
 
-        for (int j = 0; j < 500; j++) {
-            Cycle<String, String> cycle2 = randomCycle(10);
+        for (int j = 0; j < 100; j++) {
+            Cycle<String, String> cycle2 = randomCycle(100);
             addCycles(graph, cycle2);
             if (j%2==0){
                 addCrossLink(graph, cycle, cycle2);
@@ -154,7 +154,7 @@ public class GraphTest {
     public void performanceRandom() {
 
 
-        Graph<String, String> graph = randomGraph(50000);
+        Graph<String, String> graph = randomGraph(5000);
 
         for (int i = 0; i < 5; i++) {
 

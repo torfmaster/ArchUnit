@@ -62,7 +62,7 @@ class CycleFinder<T, ATTACHMENT> {
         ComponentFinder<T, ATTACHMENT> componentFinder = new ComponentFinder<>(ordering, substituteList);
         while (s.get() < size) {
             Optional<ArrayList<T>> mininmalStronglyConnectedComponent = componentFinder.findLeastScc(s.get());
-            componentFinder.reset(s.get());
+            componentFinder.reset();
             if (mininmalStronglyConnectedComponent.isPresent()) {
                 ArrayList<T> minimalComponent = mininmalStronglyConnectedComponent.get();
                 Optional<Integer> min = getMinimalVertexIndex(minimalComponent);

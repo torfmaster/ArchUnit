@@ -17,7 +17,6 @@ package com.tngtech.archunit.library.dependencies;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.Multimap;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,38 +28,15 @@ class ComponentFinder<T, ATTACHMENT> {
     private final AtomicInteger index = new AtomicInteger(-1);
     private ArrayList<Vertex<T, ATTACHMENT>> substituteList;
 
-    ComponentFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges, ImmutableBiMap<T, Integer> ordering) {
-        this.ordering = ordering;
-        Vertex<T, ATTACHMENT>[] array = new Vertex[nodes.size()];
-        substituteList = new ArrayList<>(Arrays.asList((array)));
-
-        for (T node : nodes) {
-            Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(node);
-            Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), new ArrayList<>(edges));
-            ArrayList<Integer> outgoingEdgesArray = new ArrayList<>();
-            for (Edge<T, ATTACHMENT> edge : edges) {
-                outgoingEdgesArray.add(ordering.get(edge.getTo()));
-            }
-            vertex.outgoingEdgesArray = outgoingEdgesArray;
-            array[ordering.get(node)] = vertex;
-        }
-    }
-
     ComponentFinder(ImmutableBiMap<T, Integer> ordering, ArrayList<Vertex<T, ATTACHMENT>> substituteList) {
         this.ordering = ordering;
         this.substituteList = substituteList;
     }
 
-    void reset(int start) {
+    void reset() {
         index.set(-1);
         components.clear();
         stack.clear();
-        /*for (int i = start; i < substituteList.size(); i++) {
-            Vertex<T, ATTACHMENT> tattachmentVertex = substituteList.get(i);
-            //tattachmentVertex.setOnStack(false);
-            //tattachmentVertex.lowLink=null;
-            //tattachmentVertex.index=null;
-        }*/
     }
 
     Optional<ArrayList<T>> findLeastScc(int i) {
@@ -122,7 +98,7 @@ class ComponentFinder<T, ATTACHMENT> {
                 }
                 int min = Math.min(v.getLowLink(), w.getLowLink());
                 v.setLowLink(min);
-            } else if (!(w.onStack == null) && w.onStack) {
+            } else if (isOnStack(w)) {
                 int min = Math.min(w.getIndex(), v.getLowLink());
                 v.setLowLink(min);
             }
@@ -149,7 +125,11 @@ class ComponentFinder<T, ATTACHMENT> {
         return false;
     }
 
-    public static class Vertex<T, ATTACHMENT> {
+    private boolean isOnStack(Vertex<T, ATTACHMENT> w) {
+        return !(w.onStack == null) && w.onStack;
+    }
+
+    static class Vertex<T, ATTACHMENT> {
         Vertex(T datum, Integer order, Collection<Edge<T, ATTACHMENT>> outgoingEdges) {
             this.datum = datum;
             this.order = order;
@@ -157,10 +137,6 @@ class ComponentFinder<T, ATTACHMENT> {
         }
 
         T datum;
-
-        public Boolean getOnStack() {
-            return onStack;
-        }
 
         Integer order;
 
@@ -196,10 +172,6 @@ class ComponentFinder<T, ATTACHMENT> {
         Integer lowLink;
         Boolean onStack;
         ArrayList<Integer> outgoingEdgesArray;
-
-        public Collection<Edge<T, ATTACHMENT>> getOutgoingEdges() {
-            return outgoingEdges;
-        }
 
         Collection<Edge<T, ATTACHMENT>> outgoingEdges;
     }
