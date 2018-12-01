@@ -17,7 +17,6 @@ package com.tngtech.archunit.library.dependencies;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 
 import java.util.*;
@@ -26,18 +25,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 class ComponentFinder<T, ATTACHMENT> {
     private ArrayList<Vertex<T, ATTACHMENT>> nodes2;
     private ImmutableBiMap<T, Integer> ordering;
-    private final HashSet<ArrayList<T>> components = new HashSet<ArrayList<T>>();
+    private final ArrayList<ArrayList<T>> components = new ArrayList<ArrayList<T>>();
     private final ArrayDeque<Vertex<T, ATTACHMENT>> stack = new ArrayDeque<>();
     private final AtomicInteger index = new AtomicInteger(-1);
     private HashMap<T, Vertex<T, ATTACHMENT>> vertices;
+    private ArrayList<Vertex<T, ATTACHMENT>> substituteList;
 
     ComponentFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges, ImmutableBiMap<T, Integer> ordering) {
         this.ordering = ordering;
         ArrayList<Vertex<T, ATTACHMENT>> nodes2 = new ArrayList<>();
+        Vertex<T, ATTACHMENT>[] array = new Vertex[nodes.size()];
+        substituteList = new ArrayList<>(Arrays.asList((array)));
+
         HashMap<T, Vertex<T, ATTACHMENT>> builder = new HashMap<>();
         for (T node : nodes) {
-
-            Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), new ArrayList<>(outgoingEdges.get(node)));
+            Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(node);
+            Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), new ArrayList<>(edges));
+            ArrayList<Integer> outgoingEdgesArray = new ArrayList<>();
+            for (Edge<T, ATTACHMENT> edge : edges) {
+                outgoingEdgesArray.add(ordering.get(edge.getTo()));
+            }
+            vertex.outgoingEdgesArray = outgoingEdgesArray;
+            array[ordering.get(node)] = vertex;
             nodes2.add(vertex);
             builder.put(node, vertex);
         }
@@ -45,10 +54,11 @@ class ComponentFinder<T, ATTACHMENT> {
         vertices = builder;
     }
 
-    ComponentFinder(HashMap<T, Vertex<T, ATTACHMENT>> vertices, ImmutableBiMap<T, Integer> ordering, ArrayList<Vertex<T, ATTACHMENT>> nodes2) {
+    ComponentFinder(HashMap<T, Vertex<T, ATTACHMENT>> vertices, ImmutableBiMap<T, Integer> ordering, ArrayList<Vertex<T, ATTACHMENT>> nodes2, ArrayList<Vertex<T, ATTACHMENT>> substituteList) {
         this.vertices = vertices;
         this.ordering = ordering;
         this.nodes2 = nodes2;
+        this.substituteList = substituteList;
         for (Vertex<T, ATTACHMENT> tattachmentVertex : nodes2) {
             tattachmentVertex.setOnStack(false);
             tattachmentVertex.lowLink=null;
@@ -57,7 +67,7 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
     Optional<ArrayList<T>> findLeastScc(int i) {
-        HashSet<ArrayList<T>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(i);
+        ArrayList<ArrayList<T>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(i);
         Optional<ArrayList<T>> chosen = Optional.absent();
         Optional<Integer> globalMin = Optional.absent();
         for (ArrayList<T> stronglyConncectedComponent : stronglyConnectedComponents) {
@@ -85,10 +95,14 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
 
-    HashSet<ArrayList<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
-        for (Vertex<T, ATTACHMENT> node : nodes2) {
-            if ((node.getIndex() == null) && node.getOrder() >= i) {
-                scc(node, i);
+    ArrayList<ArrayList<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
+        int size = substituteList.size();
+        for (int j = i; j < size; j++) {
+            if (substituteList.get(j).getIndex() == null) {
+                if (scc(substituteList.get(j), i)) {
+                    break;
+                }
+                ;
             }
         }
         return components;
@@ -101,9 +115,8 @@ class ComponentFinder<T, ATTACHMENT> {
         v.setOnStack(true);
         stack.push(v);
 
-        Collection<Edge<T, ATTACHMENT>> edges = v.getOutgoingEdges();
-        for (Edge<T, ATTACHMENT> edge : edges) {
-            Vertex<T, ATTACHMENT> w = vertices.get(edge.getTo());
+        for (Integer edge : v.outgoingEdgesArray) {
+            Vertex<T, ATTACHMENT> w = substituteList.get(edge);
             if (w.getOrder() < i) {
                 continue;
             }
@@ -185,6 +198,7 @@ class ComponentFinder<T, ATTACHMENT> {
         Integer index;
         Integer lowLink;
         Boolean onStack;
+        ArrayList<Integer> outgoingEdgesArray;
 
         public Collection<Edge<T, ATTACHMENT>> getOutgoingEdges() {
             return outgoingEdges;

@@ -45,9 +45,18 @@ class CycleFinder<T, ATTACHMENT> {
     ImmutableSet<Cycle<T, ATTACHMENT>> findCircuits() {
         ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> nodes2 = new ArrayList<>();
         HashMap<T, ComponentFinder.Vertex<T, ATTACHMENT>> builder = new HashMap<>();
+        ComponentFinder.Vertex<T, ATTACHMENT>[] array = new ComponentFinder.Vertex[nodes.size()];
+        ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> substituteList = new ArrayList<>(Arrays.asList((array)));
         for (T node : nodes) {
-            ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node),
-                    new ArrayList<>(outgoingEdges.get(node)));
+            Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(node);
+            ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node), new ArrayList<>(edges));
+            ArrayList<Integer> outgoingEdgesArray = new ArrayList<>();
+            for (Edge<T, ATTACHMENT> edge : edges) {
+                outgoingEdgesArray.add(ordering.get(edge.getTo()));
+            }
+            vertex.outgoingEdgesArray = outgoingEdgesArray;
+            substituteList.set(ordering.get(node), vertex);
+            array[ordering.get(node)] = vertex;
             nodes2.add(vertex);
             builder.put(node, vertex);
         }
@@ -55,7 +64,7 @@ class CycleFinder<T, ATTACHMENT> {
 
         int size = nodes.size();
         while (s.get() < size) {
-            Optional<ArrayList<T>> mininmalStronglyConnectedComponent = new ComponentFinder<T, ATTACHMENT>(builder, ordering, nodes2).findLeastScc(s.get());
+            Optional<ArrayList<T>> mininmalStronglyConnectedComponent = new ComponentFinder<T, ATTACHMENT>(builder, ordering, nodes2, substituteList).findLeastScc(s.get());
             if (mininmalStronglyConnectedComponent.isPresent()) {
                 ArrayList<T> minimalComponent = mininmalStronglyConnectedComponent.get();
                 Optional<Integer> min = getMinimalVertexIndex(minimalComponent);
