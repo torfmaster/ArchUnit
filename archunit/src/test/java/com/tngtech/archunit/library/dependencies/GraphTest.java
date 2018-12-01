@@ -102,9 +102,9 @@ public class GraphTest {
     // 200x10x5
 
         Graph<String, String> graph = new Graph<>();
-        for (int j = 0; j < 200; j++) {
-            Cycle<String, String> cycle = randomCycle(10);
-            Cycle<String, String> cycle2 = randomCycle(10);
+        for (int j = 0; j < 3000; j++) {
+            Cycle<String, String> cycle = randomCycle(200);
+            Cycle<String, String> cycle2 = randomCycle(200);
             addCycles(graph, cycle);
             addCycles(graph, cycle2);
             addCrossLink(graph, cycle, cycle2);

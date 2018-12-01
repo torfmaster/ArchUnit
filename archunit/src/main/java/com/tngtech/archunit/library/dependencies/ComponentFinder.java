@@ -18,19 +18,20 @@ package com.tngtech.archunit.library.dependencies;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableBiMap;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class ComponentFinder<T, ATTACHMENT> {
+class ComponentFinder<T> {
     private ImmutableBiMap<T, Integer> ordering;
     private final ArrayList<ArrayList<T>> components = new ArrayList<>();
-    private final ArrayDeque<Vertex<T, ATTACHMENT>> stack = new ArrayDeque<>();
+    private final ArrayDeque<Vertex<T>> stack = new ArrayDeque<>();
     private final AtomicInteger index = new AtomicInteger(-1);
-    private ArrayList<Vertex<T, ATTACHMENT>> substituteList;
+    private ArrayList<Vertex<T>> vertexList;
 
-    ComponentFinder(ImmutableBiMap<T, Integer> ordering, ArrayList<Vertex<T, ATTACHMENT>> substituteList) {
+    ComponentFinder(ImmutableBiMap<T, Integer> ordering, ArrayList<Vertex<T>> vertexList) {
         this.ordering = ordering;
-        this.substituteList = substituteList;
+        this.vertexList = vertexList;
     }
 
     void reset() {
@@ -39,8 +40,8 @@ class ComponentFinder<T, ATTACHMENT> {
         stack.clear();
     }
 
-    Optional<ArrayList<T>> findLeastScc(int i) {
-        ArrayList<ArrayList<T>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(i);
+    Optional<ArrayList<T>> findLeastScc(int lowerIndexBound) {
+        ArrayList<ArrayList<T>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(lowerIndexBound);
         Optional<ArrayList<T>> chosen = Optional.absent();
         Optional<Integer> globalMin = Optional.absent();
         for (ArrayList<T> stronglyConncectedComponent : stronglyConnectedComponents) {
@@ -68,11 +69,11 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
 
-    ArrayList<ArrayList<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int i) {
-        int size = substituteList.size();
-        for (int j = i; j < size; j++) {
-            if (substituteList.get(j).getIndex() == null) {
-                if (scc(substituteList.get(j), i)) {
+    private ArrayList<ArrayList<T>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int lowerIndexBound) {
+        int size = vertexList.size();
+        for (int j = lowerIndexBound; j < size; j++) {
+            if (vertexList.get(j).getIndex() == null) {
+                if (scc(vertexList.get(j), lowerIndexBound)) {
                     break;
                 }
             }
@@ -80,7 +81,7 @@ class ComponentFinder<T, ATTACHMENT> {
         return components;
     }
 
-    private boolean scc(Vertex<T, ATTACHMENT> v, int i) {
+    private boolean scc(Vertex<T> v, int lowerIndexBound) {
         int currentIndex = index.incrementAndGet();
         v.setIndex(currentIndex);
         v.setLowLink(currentIndex);
@@ -88,12 +89,12 @@ class ComponentFinder<T, ATTACHMENT> {
         stack.push(v);
 
         for (Integer edge : v.outgoingEdgesArray) {
-            Vertex<T, ATTACHMENT> w = substituteList.get(edge);
-            if (w.getOrder() < i) {
+            Vertex<T> w = vertexList.get(edge);
+            if (w.getOrder() < lowerIndexBound) {
                 continue;
             }
             if ((w.getIndex() == null)) {
-                if (scc(w, i)){
+                if (scc(w, lowerIndexBound)) {
                     return true;
                 }
                 int min = Math.min(v.getLowLink(), w.getLowLink());
@@ -105,12 +106,12 @@ class ComponentFinder<T, ATTACHMENT> {
         }
 
         if (v.lowLink.equals(v.getIndex())) {
-            Vertex<T, ATTACHMENT> w;
+            Vertex<T> w;
             boolean minimumAchieved = false;
             ArrayList<T> component = new ArrayList<>();
             do {
                 w = stack.pop();
-                if (w.getOrder().equals(i)) {
+                if (w.getOrder().equals(lowerIndexBound)) {
                     minimumAchieved=true;
                 }
                 w.setOnStack(false);
@@ -118,18 +119,16 @@ class ComponentFinder<T, ATTACHMENT> {
                 component.add(w.getDatum());
             } while (!v.equals(w));
             components.add(component);
-            if (minimumAchieved){
-                return true;
-            }
+            return minimumAchieved;
         }
         return false;
     }
 
-    private boolean isOnStack(Vertex<T, ATTACHMENT> w) {
+    private boolean isOnStack(Vertex<T> w) {
         return !(w.onStack == null) && w.onStack;
     }
 
-    static class Vertex<T, ATTACHMENT> {
+    static class Vertex<T> {
         Vertex(T datum, Integer order) {
             this.datum = datum;
             this.order = order;

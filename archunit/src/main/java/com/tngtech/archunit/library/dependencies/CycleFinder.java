@@ -43,11 +43,11 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
     ImmutableSet<Cycle<T, ATTACHMENT>> findCircuits() {
-        ComponentFinder.Vertex<T, ATTACHMENT>[] array = new ComponentFinder.Vertex[nodes.size()];
-        ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> substituteList = new ArrayList<>(Arrays.asList((array)));
+        ComponentFinder.Vertex<T>[] array = new ComponentFinder.Vertex[nodes.size()];
+        ArrayList<ComponentFinder.Vertex<T>> substituteList = new ArrayList<>(Arrays.asList((array)));
         for (T node : nodes) {
             Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(node);
-            ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node));
+            ComponentFinder.Vertex<T> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node));
             ArrayList<Integer> outgoingEdgesArray = new ArrayList<>();
             for (Edge<T, ATTACHMENT> edge : edges) {
                 outgoingEdgesArray.add(ordering.get(edge.getTo()));
@@ -59,7 +59,7 @@ class CycleFinder<T, ATTACHMENT> {
 
         int size = nodes.size();
 
-        ComponentFinder<T, ATTACHMENT> componentFinder = new ComponentFinder<>(ordering, substituteList);
+        ComponentFinder<T> componentFinder = new ComponentFinder<>(ordering, substituteList);
         while (s.get() < size) {
             Optional<ArrayList<T>> mininmalStronglyConnectedComponent = componentFinder.findLeastScc(s.get());
             componentFinder.reset();
