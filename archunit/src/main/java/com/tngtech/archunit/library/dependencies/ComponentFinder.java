@@ -23,21 +23,17 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class ComponentFinder<T, ATTACHMENT> {
-    private ArrayList<Vertex<T, ATTACHMENT>> nodes2;
     private ImmutableBiMap<T, Integer> ordering;
-    private final ArrayList<ArrayList<T>> components = new ArrayList<ArrayList<T>>();
+    private final ArrayList<ArrayList<T>> components = new ArrayList<>();
     private final ArrayDeque<Vertex<T, ATTACHMENT>> stack = new ArrayDeque<>();
     private final AtomicInteger index = new AtomicInteger(-1);
-    private HashMap<T, Vertex<T, ATTACHMENT>> vertices;
     private ArrayList<Vertex<T, ATTACHMENT>> substituteList;
 
     ComponentFinder(Set<T> nodes, Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges, ImmutableBiMap<T, Integer> ordering) {
         this.ordering = ordering;
-        ArrayList<Vertex<T, ATTACHMENT>> nodes2 = new ArrayList<>();
         Vertex<T, ATTACHMENT>[] array = new Vertex[nodes.size()];
         substituteList = new ArrayList<>(Arrays.asList((array)));
 
-        HashMap<T, Vertex<T, ATTACHMENT>> builder = new HashMap<>();
         for (T node : nodes) {
             Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(node);
             Vertex<T, ATTACHMENT> vertex = new Vertex<>(node, ordering.get(node), new ArrayList<>(edges));
@@ -47,21 +43,22 @@ class ComponentFinder<T, ATTACHMENT> {
             }
             vertex.outgoingEdgesArray = outgoingEdgesArray;
             array[ordering.get(node)] = vertex;
-            nodes2.add(vertex);
-            builder.put(node, vertex);
         }
-        this.nodes2=nodes2;
-        vertices = builder;
     }
 
-    ComponentFinder(HashMap<T, Vertex<T, ATTACHMENT>> vertices, ImmutableBiMap<T, Integer> ordering, ArrayList<Vertex<T, ATTACHMENT>> nodes2, ArrayList<Vertex<T, ATTACHMENT>> substituteList) {
-        this.vertices = vertices;
+    ComponentFinder(ImmutableBiMap<T, Integer> ordering, ArrayList<Vertex<T, ATTACHMENT>> substituteList) {
         this.ordering = ordering;
-        this.nodes2 = nodes2;
         this.substituteList = substituteList;
-        for (Vertex<T, ATTACHMENT> tattachmentVertex : nodes2) {
-            tattachmentVertex.setOnStack(false);
-            tattachmentVertex.lowLink=null;
+    }
+
+    void reset(int start) {
+        index.set(-1);
+        components.clear();
+        stack.clear();
+        for (int i = start; i < substituteList.size(); i++) {
+            Vertex<T, ATTACHMENT> tattachmentVertex = substituteList.get(i);
+            //tattachmentVertex.setOnStack(false);
+            //tattachmentVertex.lowLink=null;
             tattachmentVertex.index=null;
         }
     }
@@ -102,7 +99,6 @@ class ComponentFinder<T, ATTACHMENT> {
                 if (scc(substituteList.get(j), i)) {
                     break;
                 }
-                ;
             }
         }
         return components;
@@ -123,7 +119,7 @@ class ComponentFinder<T, ATTACHMENT> {
             if ((w.getIndex() == null)) {
                 if (scc(w, i)){
                     return true;
-                };
+                }
                 int min = Math.min(v.getLowLink(), w.getLowLink());
                 v.setLowLink(min);
             } else if (!(w.onStack == null) && w.onStack) {

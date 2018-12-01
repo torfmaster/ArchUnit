@@ -43,8 +43,6 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
     ImmutableSet<Cycle<T, ATTACHMENT>> findCircuits() {
-        ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> nodes2 = new ArrayList<>();
-        HashMap<T, ComponentFinder.Vertex<T, ATTACHMENT>> builder = new HashMap<>();
         ComponentFinder.Vertex<T, ATTACHMENT>[] array = new ComponentFinder.Vertex[nodes.size()];
         ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> substituteList = new ArrayList<>(Arrays.asList((array)));
         for (T node : nodes) {
@@ -56,15 +54,15 @@ class CycleFinder<T, ATTACHMENT> {
             }
             vertex.outgoingEdgesArray = outgoingEdgesArray;
             substituteList.set(ordering.get(node), vertex);
-            array[ordering.get(node)] = vertex;
-            nodes2.add(vertex);
-            builder.put(node, vertex);
         }
 
 
         int size = nodes.size();
+
+        ComponentFinder<T, ATTACHMENT> componentFinder = new ComponentFinder<>(ordering, substituteList);
         while (s.get() < size) {
-            Optional<ArrayList<T>> mininmalStronglyConnectedComponent = new ComponentFinder<T, ATTACHMENT>(builder, ordering, nodes2, substituteList).findLeastScc(s.get());
+            Optional<ArrayList<T>> mininmalStronglyConnectedComponent = componentFinder.findLeastScc(s.get());
+            componentFinder.reset(s.get());
             if (mininmalStronglyConnectedComponent.isPresent()) {
                 ArrayList<T> minimalComponent = mininmalStronglyConnectedComponent.get();
                 Optional<Integer> min = getMinimalVertexIndex(minimalComponent);
@@ -80,9 +78,8 @@ class CycleFinder<T, ATTACHMENT> {
                     throw new IllegalArgumentException("Unreachable code: Strongly connected components are always non-empty.");
                 }
             } else {
-                throw new IllegalArgumentException(String.format("Unreachable code: The set of edges with order >= %d mut be non-empty.", s.get()));
+                throw new IllegalArgumentException(String.format("Unreachable code: The set of edges with order >= %d must be non-empty.", s.get()));
             }
-
         }
 
         return FluentIterable.from(circuits).transform(

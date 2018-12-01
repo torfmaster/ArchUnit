@@ -127,7 +127,7 @@ public class GraphTest {
         addCycles(graph, cycle);
 
 
-        for (int j = 0; j < 5000; j++) {
+        for (int j = 0; j < 500; j++) {
             Cycle<String, String> cycle2 = randomCycle(10);
             addCycles(graph, cycle2);
             if (j%2==0){
