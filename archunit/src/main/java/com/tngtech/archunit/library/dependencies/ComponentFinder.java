@@ -130,10 +130,9 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
     static class Vertex<T, ATTACHMENT> {
-        Vertex(T datum, Integer order, Collection<Edge<T, ATTACHMENT>> outgoingEdges) {
+        Vertex(T datum, Integer order) {
             this.datum = datum;
             this.order = order;
-            this.outgoingEdges = outgoingEdges;
         }
 
         T datum;
@@ -173,7 +172,6 @@ class ComponentFinder<T, ATTACHMENT> {
         Boolean onStack;
         ArrayList<Integer> outgoingEdgesArray;
 
-        Collection<Edge<T, ATTACHMENT>> outgoingEdges;
     }
 
 }

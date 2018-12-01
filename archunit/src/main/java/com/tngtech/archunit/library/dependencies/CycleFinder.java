@@ -47,7 +47,7 @@ class CycleFinder<T, ATTACHMENT> {
         ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> substituteList = new ArrayList<>(Arrays.asList((array)));
         for (T node : nodes) {
             Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(node);
-            ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node), new ArrayList<>(edges));
+            ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node));
             ArrayList<Integer> outgoingEdgesArray = new ArrayList<>();
             for (Edge<T, ATTACHMENT> edge : edges) {
                 outgoingEdgesArray.add(ordering.get(edge.getTo()));
