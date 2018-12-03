@@ -34,6 +34,7 @@ class CycleFinder<T, ATTACHMENT> {
     private HashSet<List<Edge<T, ATTACHMENT>>> circuits = new HashSet<>();
 
     private AtomicInteger s = new AtomicInteger(0);
+    private ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> substituteList;
 
 
     CycleFinder(Graph<T, ATTACHMENT> graph) {
@@ -43,34 +44,34 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
     ImmutableSet<Cycle<T, ATTACHMENT>> findCircuits() {
-        ComponentFinder.Vertex<T>[] array = new ComponentFinder.Vertex[nodes.size()];
-        ArrayList<ComponentFinder.Vertex<T>> substituteList = new ArrayList<>(Arrays.asList((array)));
+        substituteList = new ArrayList<>(Collections.nCopies(nodes.size(), (ComponentFinder.Vertex<T, ATTACHMENT>) null));
         for (T node : nodes) {
             Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(node);
-            ComponentFinder.Vertex<T> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node));
+            ComponentFinder.Vertex<T, ATTACHMENT> vertex = new ComponentFinder.Vertex<>(node, ordering.get(node));
             ArrayList<Integer> outgoingEdgesArray = new ArrayList<>();
             for (Edge<T, ATTACHMENT> edge : edges) {
                 outgoingEdgesArray.add(ordering.get(edge.getTo()));
             }
             vertex.outgoingEdgesArray = outgoingEdgesArray;
+            vertex.outgoingEdges = new ArrayList<>(edges);
             substituteList.set(ordering.get(node), vertex);
         }
 
 
         int size = nodes.size();
 
-        ComponentFinder<T> componentFinder = new ComponentFinder<>(ordering, substituteList);
+        ComponentFinder<T, ATTACHMENT> componentFinder = new ComponentFinder<>(ordering, substituteList);
         while (s.get() < size) {
-            Optional<ArrayList<T>> mininmalStronglyConnectedComponent = componentFinder.findLeastScc(s.get());
+            Optional<ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>>> mininmalStronglyConnectedComponent = componentFinder.findLeastScc(s.get());
             componentFinder.reset();
             if (mininmalStronglyConnectedComponent.isPresent()) {
-                ArrayList<T> minimalComponent = mininmalStronglyConnectedComponent.get();
+                ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> minimalComponent = mininmalStronglyConnectedComponent.get();
                 Optional<Integer> min = getMinimalVertexIndex(minimalComponent);
                 if (min.isPresent()) {
                     s.set(min.get());
-                    for (T t : minimalComponent) {
-                        blocked.put(t, false);
-                        blockedBy.put(ordering.get(t), new ArrayList<Integer>());
+                    for (ComponentFinder.Vertex<T, ATTACHMENT> t : minimalComponent) {
+                        blocked.put(t.getDatum(), false);
+                        blockedBy.put(t.getOrder(), new ArrayList<Integer>());
                     }
                     circuit(s.get(), minimalComponent, Optional.<Edge<T, ATTACHMENT>>absent());
                     s.addAndGet(1);
@@ -92,7 +93,7 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
 
-    private boolean circuit(int vIndex, ArrayList<T> component, Optional<Edge<T, ATTACHMENT>> edge) {
+    private boolean circuit(int vIndex, ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> component, Optional<Edge<T, ATTACHMENT>> edge) {
         boolean circuitFound = false;
         if (edge.isPresent()) {
             edgeStack.push(edge.get());
@@ -103,7 +104,7 @@ class CycleFinder<T, ATTACHMENT> {
         for (Edge<T, ATTACHMENT> edgeFromVToW : getAdjacents(component, vIndex)) {
             T w = edgeFromVToW.getTo();
             Integer indexOfW = ordering.get(w);
-            if (w.equals(ordering.inverse().get(s.get()))) {
+            if (indexOfW.equals(s.get())) {
                 ImmutableList.Builder<Edge<T, ATTACHMENT>> edgeBuilder = new ImmutableList.Builder<>();
                 ArrayDeque<Edge<T, ATTACHMENT>> copyOfEdgeStackToPop = edgeStack.clone();
                 copyOfEdgeStackToPop.push(edgeFromVToW);
@@ -141,17 +142,27 @@ class CycleFinder<T, ATTACHMENT> {
         return circuitFound;
     }
 
-    private ImmutableSet<Edge<T, ATTACHMENT>> getAdjacents(final ArrayList<T> component, final int v) {
+    private FluentIterable<Edge<T, ATTACHMENT>> getAdjacents(final ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> component, final int v) {
         return FluentIterable.from(
-                outgoingEdges.get(ordering.inverse().get(v)))
+                substituteList.get(v).outgoingEdges)
                 .filter(new Predicate<Edge<T, ATTACHMENT>>() {
                             @Override
                             public boolean apply(Edge<T, ATTACHMENT> input) {
-                                return component.contains(input.getTo());
+                                return isContains(input, component);
                             }
                         }
-                ).toSet();
+                );
 
+    }
+
+    private boolean isContains(final Edge<T, ATTACHMENT> edge, ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> component) {
+        return
+                FluentIterable.from(component).anyMatch(new Predicate<ComponentFinder.Vertex<T, ATTACHMENT>>() {
+                    @Override
+                    public boolean apply(ComponentFinder.Vertex<T, ATTACHMENT> input) {
+                        return edge.getTo().equals(input.getDatum());
+                    }
+                });
     }
 
     private void block(int vIndex) {
@@ -186,13 +197,13 @@ class CycleFinder<T, ATTACHMENT> {
         return builder.build();
     }
 
-    private Optional<Integer> getMinimalVertexIndex(ArrayList<T> minimalComponent) {
+    private Optional<Integer> getMinimalVertexIndex(ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> minimalComponent) {
         Optional<Integer> min = Optional.absent();
-        for (T t : minimalComponent) {
+        for (ComponentFinder.Vertex<T, ATTACHMENT> t : minimalComponent) {
             if (!min.isPresent()) {
-                min = Optional.of(ordering.get(t));
+                min = Optional.of(t.getOrder());
             } else {
-                min = Optional.of(Math.min(ordering.get(t), min.get()));
+                min = Optional.of(Math.min(t.getOrder(), min.get()));
             }
         }
         return min;

@@ -102,9 +102,9 @@ public class GraphTest {
     // 200x10x5
 
         Graph<String, String> graph = new Graph<>();
-        for (int j = 0; j < 3000; j++) {
-            Cycle<String, String> cycle = randomCycle(200);
-            Cycle<String, String> cycle2 = randomCycle(200);
+        for (int j = 0; j < 2000; j++) {
+            Cycle<String, String> cycle = randomCycle(10);
+            Cycle<String, String> cycle2 = randomCycle(10);
             addCycles(graph, cycle);
             addCycles(graph, cycle2);
             addCrossLink(graph, cycle, cycle2);
@@ -127,8 +127,8 @@ public class GraphTest {
         addCycles(graph, cycle);
 
 
-        for (int j = 0; j < 100; j++) {
-            Cycle<String, String> cycle2 = randomCycle(100);
+        for (int j = 0; j < 1000; j++) {
+            Cycle<String, String> cycle2 = randomCycle(200);
             addCycles(graph, cycle2);
             if (j%2==0){
                 addCrossLink(graph, cycle, cycle2);
@@ -154,7 +154,7 @@ public class GraphTest {
     public void performanceRandom() {
 
 
-        Graph<String, String> graph = randomGraph(5000);
+        Graph<String, String> graph = randomGraph(100000);
 
         for (int i = 0; i < 5; i++) {
 
