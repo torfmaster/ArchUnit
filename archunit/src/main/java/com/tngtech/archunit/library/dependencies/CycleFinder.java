@@ -142,7 +142,7 @@ class CycleFinder<T, ATTACHMENT> {
         return circuitFound;
     }
 
-    private FluentIterable<Edge<T, ATTACHMENT>> getAdjacents(final ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> component, final int v) {
+    private ImmutableList<Edge<T, ATTACHMENT>> getAdjacents(final ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> component, final int v) {
         return FluentIterable.from(
                 substituteList.get(v).outgoingEdges)
                 .filter(new Predicate<Edge<T, ATTACHMENT>>() {
@@ -151,18 +151,17 @@ class CycleFinder<T, ATTACHMENT> {
                                 return isContains(input, component);
                             }
                         }
-                );
+                ).toList();
 
     }
 
     private boolean isContains(final Edge<T, ATTACHMENT> edge, ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> component) {
-        return
-                FluentIterable.from(component).anyMatch(new Predicate<ComponentFinder.Vertex<T, ATTACHMENT>>() {
-                    @Override
-                    public boolean apply(ComponentFinder.Vertex<T, ATTACHMENT> input) {
-                        return edge.getTo().equals(input.getDatum());
-                    }
-                });
+        for (ComponentFinder.Vertex<T, ATTACHMENT> tattachmentVertex : component) {
+            if (edge.getTo().equals(tattachmentVertex.getDatum())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void block(int vIndex) {
