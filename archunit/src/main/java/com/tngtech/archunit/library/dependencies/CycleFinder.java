@@ -17,7 +17,6 @@ package com.tngtech.archunit.library.dependencies;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.*;
 
 import java.util.*;
@@ -27,7 +26,7 @@ class CycleFinder<T, ATTACHMENT> {
     private Set<T> nodes;
     private Multimap<T, Edge<T, ATTACHMENT>> outgoingEdges;
     private ImmutableBiMap<T, Integer> ordering;
-    private HashMap<T, Boolean> blocked = new HashMap<>();
+    private HashMap<Integer, Boolean> blocked = new HashMap<>();
 
     private HashMap<Integer, ArrayList<Integer>> blockedBy = new HashMap<>();
     private ArrayDeque<Edge<T, ATTACHMENT>> edgeStack = new ArrayDeque<>();
@@ -71,7 +70,7 @@ class CycleFinder<T, ATTACHMENT> {
                 if (min.isPresent()) {
                     s.set(min.get());
                     for (ComponentFinder.Vertex<T, ATTACHMENT> t : minimalComponent) {
-                        blocked.put(t.getDatum(), false);
+                        blocked.put(t.getOrder(), false);
                         blockedBy.put(t.getOrder(), new ArrayList<Integer>());
                     }
                     circuit(s.get(), minimalComponent, Optional.<Edge<T, ATTACHMENT>>absent());
@@ -119,7 +118,7 @@ class CycleFinder<T, ATTACHMENT> {
                 }
                 circuits.add(edgeBuilder.build().reverse());
                 circuitFound = true;
-            } else if (!isBlocked(w)) {
+            } else if (!isBlocked(indexOfW)) {
                 if (circuit(indexOfW, component, Optional.of(edgeFromVToW))) {
                     circuitFound = true;
                 }
@@ -153,48 +152,25 @@ class CycleFinder<T, ATTACHMENT> {
         return circuitFound;
     }
 
-    private ImmutableList<Edge<T, ATTACHMENT>> getAdjacents(final HashSet<ComponentFinder.Vertex<T, ATTACHMENT>> component, final int v) {
-
-        return FluentIterable.from(
-                substituteList.get(v).outgoingEdges)
-                .filter(new Predicate<Edge<T, ATTACHMENT>>() {
-                            @Override
-                            public boolean apply(Edge<T, ATTACHMENT> input) {
-                                return isContains(input, component);
-                            }
-                        }
-                ).toList();
-
-    }
-
-    private boolean isContains(final Edge<T, ATTACHMENT> edge, HashSet<ComponentFinder.Vertex<T, ATTACHMENT>> component) {
-        for (ComponentFinder.Vertex<T, ATTACHMENT> tattachmentVertex : component) {
-            if (edge.getTo().equals(tattachmentVertex.getDatum())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void block(int vIndex) {
-        blocked.put(ordering.inverse().get(vIndex), true);
+        blocked.put(vIndex, true);
     }
 
     private void unblock(int s) {
-        blocked.put(ordering.inverse().get(s), false);
+        blocked.put(s, false);
         if (blockedBy.containsKey(s)) {
             ArrayList<Integer> elements = blockedBy.get(s);
             List<Integer> nodesForS = ImmutableList.copyOf(elements);
             for (Integer node : nodesForS) {
                 elements.remove(node);
-                if (isBlocked(ordering.inverse().get(node))) {
+                if (isBlocked(node)) {
                     unblock(node);
                 }
             }
         }
     }
 
-    private boolean isBlocked(T key) {
+    private boolean isBlocked(int key) {
         return Boolean.TRUE.equals(blocked.get(key));
     }
 
