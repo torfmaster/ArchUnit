@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 TNG Technology Consulting GmbH
+ * Copyright 2014-2020 TNG Technology Consulting GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ class CycleFinder<T, ATTACHMENT> {
 
         block(vIndex);
 
-        for (Edge<T, ATTACHMENT> edgeFromVToW : outgoingEdges.get(ordering.inverse().get(vIndex))) {
+        for (Edge<T, ATTACHMENT> edgeFromVToW : substituteList.get(vIndex).getOutgoingEdges()) {
             T w = edgeFromVToW.getTo();
             ComponentFinder.Vertex<T, ATTACHMENT> ver = new ComponentFinder.Vertex<>();
             ver.setDatum(w);

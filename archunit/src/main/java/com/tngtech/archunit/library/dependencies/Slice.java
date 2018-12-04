@@ -15,11 +15,6 @@
  */
 package com.tngtech.archunit.library.dependencies;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.tngtech.archunit.PublicAPI;
@@ -28,6 +23,11 @@ import com.tngtech.archunit.base.HasDescription;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.properties.CanOverrideDescription;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -78,6 +78,15 @@ public final class Slice extends ForwardingSet<JavaClass> implements HasDescript
     @Override
     protected Set<JavaClass> delegate() {
         return classes;
+    }
+
+    @Override
+    public int hashCode() {
+        if (matchingGroups.isEmpty()) {
+            return 0;
+        } else {
+            return matchingGroups.get(0).hashCode();
+        }
     }
 
     @Override
