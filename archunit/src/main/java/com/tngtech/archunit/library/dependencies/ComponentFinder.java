@@ -20,10 +20,12 @@ import com.google.common.collect.ImmutableBiMap;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class ComponentFinder<T, ATTACHMENT> {
-    private final ArrayList<ArrayList<Vertex<T, ATTACHMENT>>> components = new ArrayList<>();
+    private final ArrayList<HashSet<Vertex<T, ATTACHMENT>>> components = new ArrayList<>();
     private final ArrayDeque<Vertex<T, ATTACHMENT>> stack = new ArrayDeque<>();
     private final AtomicInteger index = new AtomicInteger(-1);
     private ArrayList<Vertex<T, ATTACHMENT>> vertexList;
@@ -38,11 +40,11 @@ class ComponentFinder<T, ATTACHMENT> {
         stack.clear();
     }
 
-    Optional<ArrayList<Vertex<T, ATTACHMENT>>> findLeastScc(int lowerIndexBound) {
-        ArrayList<ArrayList<Vertex<T, ATTACHMENT>>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(lowerIndexBound);
-        Optional<ArrayList<Vertex<T, ATTACHMENT>>> chosen = Optional.absent();
+    Optional<HashSet<Vertex<T, ATTACHMENT>>> findLeastScc(int lowerIndexBound) {
+        ArrayList<HashSet<Vertex<T, ATTACHMENT>>> stronglyConnectedComponents = getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(lowerIndexBound);
+        Optional<HashSet<Vertex<T, ATTACHMENT>>> chosen = Optional.absent();
         Optional<Integer> globalMin = Optional.absent();
-        for (ArrayList<Vertex<T, ATTACHMENT>> stronglyConncectedComponent : stronglyConnectedComponents) {
+        for (HashSet<Vertex<T, ATTACHMENT>> stronglyConncectedComponent : stronglyConnectedComponents) {
             Optional<Integer> min = Optional.absent();
             for (Vertex<T, ATTACHMENT> t : stronglyConncectedComponent) {
                 if (!min.isPresent()) {
@@ -67,7 +69,7 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
 
-    private ArrayList<ArrayList<Vertex<T, ATTACHMENT>>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int lowerIndexBound) {
+    private ArrayList<HashSet<Vertex<T, ATTACHMENT>>> getStronglyConnectedComponentsInInducedSubgraphBiggerThanI(int lowerIndexBound) {
         int size = vertexList.size();
         for (int j = lowerIndexBound; j < size; j++) {
             if (vertexList.get(j).getIndex() == null) {
@@ -106,7 +108,7 @@ class ComponentFinder<T, ATTACHMENT> {
         if (v.lowLink.equals(v.getIndex())) {
             Vertex<T, ATTACHMENT> w;
             boolean minimumAchieved = false;
-            ArrayList<Vertex<T, ATTACHMENT>> component = new ArrayList<>();
+            HashSet<Vertex<T, ATTACHMENT>> component = new HashSet<>();
             do {
                 w = stack.pop();
                 if (w.getOrder().equals(lowerIndexBound)) {
@@ -128,9 +130,30 @@ class ComponentFinder<T, ATTACHMENT> {
     }
 
     static class Vertex<T, ATTACHMENT> {
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Vertex<?, ?> vertex = (Vertex<?, ?>) o;
+            return Objects.equals(datum, vertex.datum);
+        }
+
+        @Override
+        public int hashCode() {
+
+            return Objects.hash(datum);
+        }
+
         Vertex(T datum, Integer order) {
             this.datum = datum;
             this.order = order;
+        }
+
+        public Vertex() {
+        }
+
+        public void setDatum(T datum) {
+            this.datum = datum;
         }
 
         T datum;
@@ -168,7 +191,17 @@ class ComponentFinder<T, ATTACHMENT> {
         Integer index;
         Integer lowLink;
         Boolean onStack;
+
+        public ArrayList<Integer> getOutgoingEdgesArray() {
+            return outgoingEdgesArray;
+        }
+
         ArrayList<Integer> outgoingEdgesArray;
+
+        public ArrayList<Edge<T, ATTACHMENT>> getOutgoingEdges() {
+            return outgoingEdges;
+        }
+
         ArrayList<Edge<T, ATTACHMENT>> outgoingEdges;
 
     }

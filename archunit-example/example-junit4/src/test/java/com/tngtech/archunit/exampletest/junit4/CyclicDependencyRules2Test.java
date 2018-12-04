@@ -16,5 +16,5 @@ public class CyclicDependencyRules2Test {
 
     @ArchTest
     public static final ArchRule no_cycles_in_complex_scenario =
-            slices().matching("org.hibernate.(*)..").namingSlices("$2 of $1").should().beFreeOfCycles();
+            slices().matching("org.hibernate.(**)").namingSlices("$2 of $1").should().beFreeOfCycles();
 }

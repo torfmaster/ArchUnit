@@ -59,13 +59,14 @@ class CycleFinder<T, ATTACHMENT> {
 
 
         int size = nodes.size();
+        // FIXME >= s, skip direcftly
 
         ComponentFinder<T, ATTACHMENT> componentFinder = new ComponentFinder<>(ordering, substituteList);
         while (s.get() < size) {
-            Optional<ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>>> mininmalStronglyConnectedComponent = componentFinder.findLeastScc(s.get());
+            Optional<HashSet<ComponentFinder.Vertex<T, ATTACHMENT>>> mininmalStronglyConnectedComponent = componentFinder.findLeastScc(s.get());
             componentFinder.reset();
             if (mininmalStronglyConnectedComponent.isPresent()) {
-                ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> minimalComponent = mininmalStronglyConnectedComponent.get();
+                HashSet<ComponentFinder.Vertex<T, ATTACHMENT>> minimalComponent = mininmalStronglyConnectedComponent.get();
                 Optional<Integer> min = getMinimalVertexIndex(minimalComponent);
                 if (min.isPresent()) {
                     s.set(min.get());
@@ -93,7 +94,7 @@ class CycleFinder<T, ATTACHMENT> {
     }
 
 
-    private boolean circuit(int vIndex, ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> component, Optional<Edge<T, ATTACHMENT>> edge) {
+    private boolean circuit(int vIndex, HashSet<ComponentFinder.Vertex<T, ATTACHMENT>> component, Optional<Edge<T, ATTACHMENT>> edge) {
         boolean circuitFound = false;
         if (edge.isPresent()) {
             edgeStack.push(edge.get());
@@ -101,8 +102,13 @@ class CycleFinder<T, ATTACHMENT> {
 
         block(vIndex);
 
-        for (Edge<T, ATTACHMENT> edgeFromVToW : getAdjacents(component, vIndex)) {
+        for (Edge<T, ATTACHMENT> edgeFromVToW : outgoingEdges.get(ordering.inverse().get(vIndex))) {
             T w = edgeFromVToW.getTo();
+            ComponentFinder.Vertex<T, ATTACHMENT> ver = new ComponentFinder.Vertex<>();
+            ver.setDatum(w);
+            if (!component.contains(ver)) {
+                continue;
+            }
             Integer indexOfW = ordering.get(w);
             if (indexOfW.equals(s.get())) {
                 ImmutableList.Builder<Edge<T, ATTACHMENT>> edgeBuilder = new ImmutableList.Builder<>();
@@ -123,7 +129,12 @@ class CycleFinder<T, ATTACHMENT> {
         if (circuitFound) {
             unblock(vIndex);
         } else {
-            for (Edge<T, ATTACHMENT> w : getAdjacents(component, vIndex)) {
+            for (Edge<T, ATTACHMENT> w : substituteList.get(vIndex).getOutgoingEdges()) {
+                ComponentFinder.Vertex<T, ATTACHMENT> tattachmentVertex = new ComponentFinder.Vertex<>();
+                tattachmentVertex.setDatum(w.getTo());
+                if (!component.contains(tattachmentVertex)) {
+                    continue;
+                }
                 Integer indexOfW = ordering.get(w.getTo());
                 if (!blockedBy.containsKey(indexOfW)) {
                     ArrayList<Integer> integers = new ArrayList<>();
@@ -142,7 +153,8 @@ class CycleFinder<T, ATTACHMENT> {
         return circuitFound;
     }
 
-    private ImmutableList<Edge<T, ATTACHMENT>> getAdjacents(final ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> component, final int v) {
+    private ImmutableList<Edge<T, ATTACHMENT>> getAdjacents(final HashSet<ComponentFinder.Vertex<T, ATTACHMENT>> component, final int v) {
+
         return FluentIterable.from(
                 substituteList.get(v).outgoingEdges)
                 .filter(new Predicate<Edge<T, ATTACHMENT>>() {
@@ -155,7 +167,7 @@ class CycleFinder<T, ATTACHMENT> {
 
     }
 
-    private boolean isContains(final Edge<T, ATTACHMENT> edge, ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> component) {
+    private boolean isContains(final Edge<T, ATTACHMENT> edge, HashSet<ComponentFinder.Vertex<T, ATTACHMENT>> component) {
         for (ComponentFinder.Vertex<T, ATTACHMENT> tattachmentVertex : component) {
             if (edge.getTo().equals(tattachmentVertex.getDatum())) {
                 return true;
@@ -196,7 +208,7 @@ class CycleFinder<T, ATTACHMENT> {
         return builder.build();
     }
 
-    private Optional<Integer> getMinimalVertexIndex(ArrayList<ComponentFinder.Vertex<T, ATTACHMENT>> minimalComponent) {
+    private Optional<Integer> getMinimalVertexIndex(HashSet<ComponentFinder.Vertex<T, ATTACHMENT>> minimalComponent) {
         Optional<Integer> min = Optional.absent();
         for (ComponentFinder.Vertex<T, ATTACHMENT> t : minimalComponent) {
             if (!min.isPresent()) {
