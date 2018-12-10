@@ -49,6 +49,7 @@ import static com.tngtech.archunit.PublicAPI.Usage.ACCESS;
 public final class Slice extends ForwardingSet<JavaClass> implements HasDescription, CanOverrideDescription<Slice> {
     private final SliceAssignment sliceAssignment;
     private final List<String> matchingGroups;
+    private final int hashCode;
     private final Description description;
     private final Set<JavaClass> classes;
 
@@ -65,6 +66,7 @@ public final class Slice extends ForwardingSet<JavaClass> implements HasDescript
         this.matchingGroups = checkNotNull(matchingGroups);
         this.description = checkNotNull(description);
         this.classes = ImmutableSet.copyOf(classes);
+        hashCode = matchingGroups.hashCode();
     }
 
     private static List<String> ascendingCaptures(List<String> matchingGroups) {
@@ -82,11 +84,7 @@ public final class Slice extends ForwardingSet<JavaClass> implements HasDescript
 
     @Override
     public int hashCode() {
-        if (matchingGroups.isEmpty()) {
-            return 0;
-        } else {
-            return matchingGroups.get(0).hashCode();
-        }
+        return hashCode;
     }
 
     @Override
