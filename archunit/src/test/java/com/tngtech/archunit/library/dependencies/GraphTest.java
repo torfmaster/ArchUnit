@@ -96,7 +96,7 @@ public class GraphTest {
         assertThat(cycles).containsOnly(threeElements, fourElements, fiveElements);
     }
 
-    @Test
+    //@Test
     @SuppressWarnings("unchecked")
     public void performance_chain() {
     // 200x10x5
@@ -118,7 +118,7 @@ public class GraphTest {
 
     }
 
-    @Test
+    //@Test
     @SuppressWarnings("unchecked")
     public void performance_star_alternating() {
 
@@ -149,7 +149,7 @@ public class GraphTest {
     }
 
 
-    @Test
+    //@Test
     @SuppressWarnings("unchecked")
     public void performanceRandom() {
 
