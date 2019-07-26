@@ -58,12 +58,9 @@ class CycleFinder<T, ATTACHMENT> {
 
 
         int size = nodes.size();
-        // FIXME >= s, skip direcftly
-
-        ComponentFinder<T, ATTACHMENT> componentFinder = new ComponentFinder<>(ordering, substituteList);
+        ComponentFinder<T, ATTACHMENT> componentFinder = new ComponentFinder<>(substituteList);
         while (s.get() < size) {
             Optional<HashSet<ComponentFinder.Vertex<T, ATTACHMENT>>> mininmalStronglyConnectedComponent = componentFinder.findLeastScc(s.get());
-            componentFinder.reset();
             if (mininmalStronglyConnectedComponent.isPresent()) {
                 HashSet<ComponentFinder.Vertex<T, ATTACHMENT>> minimalComponent = mininmalStronglyConnectedComponent.get();
                 Optional<Integer> min = getMinimalVertexIndex(minimalComponent);
@@ -79,7 +76,7 @@ class CycleFinder<T, ATTACHMENT> {
                     throw new IllegalArgumentException("Unreachable code: Strongly connected components are always non-empty.");
                 }
             } else {
-                throw new IllegalArgumentException(String.format("Unreachable code: The set of edges with order >= %d must be non-empty.", s.get()));
+                s.set(size);
             }
         }
 
