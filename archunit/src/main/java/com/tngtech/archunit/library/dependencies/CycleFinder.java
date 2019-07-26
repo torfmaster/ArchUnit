@@ -42,7 +42,7 @@ class CycleFinder<T, ATTACHMENT> {
         this.ordering = enumerateVertices(graph.getNodes());
     }
 
-    ImmutableSet<Cycle<T, ATTACHMENT>> findCircuits() {
+    Collection<Cycle<T, ATTACHMENT>> findCircuits() {
         substituteList = new ArrayList<>(Collections.nCopies(nodes.size(), (ComponentFinder.Vertex<T, ATTACHMENT>) null));
         for (T node : nodes) {
             Collection<Edge<T, ATTACHMENT>> edges = outgoingEdges.get(node);
@@ -86,7 +86,7 @@ class CycleFinder<T, ATTACHMENT> {
                     public Cycle<T, ATTACHMENT> apply(List<Edge<T, ATTACHMENT>> input) {
                         return new Cycle<>(input);
                     }
-                }).toSet();
+                }).toList();
     }
 
 

@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,7 +53,7 @@ class Graph<T, ATTACHMENT> {
         outgoingEdges.put(edge.getFrom(), edge);
     }
 
-    Set<Cycle<T, ATTACHMENT>> getCycles() {
+    Collection<Cycle<T, ATTACHMENT>> getCycles() {
         return new CycleFinder<>(this).findCircuits();
     }
 
