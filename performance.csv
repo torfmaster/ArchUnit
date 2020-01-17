@@ -1,0 +1,4 @@
+Test (run 10x)                         ; Average (ms) ; m1 (ms) ; m2 (ms) ; m3 (ms) ; m4 (ms) ; m5 (ms) ; m6 (ms) ; m7 (ms) ; m8 (ms) ; m9 (ms) ; m10 (ms)
+GraphTest.performance_chain            ;       7103.9 ;    8309 ;    7150 ;    6928 ;    6881 ;    7003 ;    6887 ;    6867 ;    7062 ;    7091 ;    6861
+GraphTest.performance_star_alternating ;       3955.9 ;    5138 ;    3717 ;    3864 ;    4183 ;    4224 ;    3940 ;    3797 ;    3529 ;    3649 ;    3518
+GraphTest.performanceRandom            ;       2228.6 ;    2618 ;    2157 ;    2196 ;    2150 ;    2209 ;    2234 ;    2171 ;    2136 ;    2175 ;    2240

@@ -1,12 +1,13 @@
 package com.tngtech.archunit.library.dependencies;
 
-import com.google.common.collect.ImmutableSet;
-import org.junit.Test;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import org.junit.Test;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.getOnlyElement;
@@ -80,7 +81,6 @@ public class GraphTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void multiple_cycles_are_detected() {
         Graph<String, String> graph = new Graph<>();
 
@@ -95,6 +95,68 @@ public class GraphTest {
         Collection<Cycle<String, String>> cycles = graph.getCycles();
 
         assertThat(cycles).containsOnly(threeElements, fourElements, fiveElements);
+    }
+
+    @Test
+    public void performance_chain() {
+        Graph<String, String> graph = new Graph<>();
+        for (int j = 0; j < 500; j++) {
+            Cycle<String, String> cycle = randomCycle(10);
+            Cycle<String, String> cycle2 = randomCycle(10);
+            addCycles(graph, cycle);
+            addCycles(graph, cycle2);
+            addCrossLink(graph, cycle, cycle2);
+        }
+
+        for (int i = 0; i < 5; i++) {
+            graph.getCycles();
+        }
+    }
+
+    @Test
+    public void performance_star_alternating() {
+        Graph<String, String> graph = new Graph<>();
+        Cycle<String, String> cycle = randomCycle(100);
+        addCycles(graph, cycle);
+
+        for (int j = 0; j < 100; j++) {
+            Cycle<String, String> cycle2 = randomCycle(200);
+            addCycles(graph, cycle2);
+            if (j % 2 == 0) {
+                addCrossLink(graph, cycle, cycle2);
+            } else {
+                addCrossLink(graph, cycle2, cycle);
+            }
+        }
+
+        for (int i = 0; i < 5; i++) {
+            graph.getCycles();
+        }
+    }
+
+    @Test
+    public void performanceRandom() {
+        Graph<String, String> graph = randomGraph(20000);
+
+        for (int i = 0; i < 5; i++) {
+            graph.getCycles();
+        }
+    }
+
+    private Graph<String, String> randomGraph(int size) {
+        Graph<String, String> graph = new Graph<>();
+        graph.add(randomNode(), ImmutableSet.<Edge<String, String>>of());
+
+        for (int i = 0; i < size; i++) {
+            String node = randomNode();
+            graph.add(node, ImmutableSet.<Edge<String, String>>of(new SimpleEdge(node, randomElement(graph.getNodes()))));
+        }
+        return graph;
+    }
+
+    private String randomElement(Set<String> nodes) {
+        int index = new Random().nextInt(nodes.size()); // In real life, the Random object should be rather more shared than this
+        return Iterables.get(nodes, index);
     }
 
     @Test
