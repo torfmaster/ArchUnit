@@ -86,7 +86,6 @@ class JohnsonComponent {
 
         for (int i=0; i<graph.getSize(); i++) {
             Collection<Integer> integers = dependentlyBlocked.get(i);
-            integers = ImmutableList.of(0,1,2);
             StringBuilder blockedBuilder = new StringBuilder();
             blockedBuilder.append(i+"[label=\"{{"+i+"}|"+"{Blocks|");
             String blockedAsString = Joiner.on("|").join(integers);
@@ -104,7 +103,7 @@ class JohnsonComponent {
             }
         }
 
-        int[] stack = {0,1,2}; // this.nodeStack.asArray();
+        int[] stack = this.nodeStack.asArray();
 
         StringBuilder stackBuilder = new StringBuilder();
         stackBuilder.append("stack [label=\"{{stack}");
