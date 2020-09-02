@@ -1,9 +1,13 @@
 package com.tngtech.archunit.library.dependencies;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
+import javax.websocket.DeploymentException;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -83,7 +87,7 @@ public class GraphTest {
     }
 
     @Test
-    public void multiple_cycles_are_detected() {
+    public void multiple_cycles_are_detected() throws URISyntaxException, IOException, DeploymentException {
         Graph<String, String> graph = new Graph<>();
 
         Cycle<String, String> threeElements = randomCycle(3);

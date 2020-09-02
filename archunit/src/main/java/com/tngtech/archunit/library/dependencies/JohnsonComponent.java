@@ -15,11 +15,15 @@
  */
 package com.tngtech.archunit.library.dependencies;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import com.tngtech.archunit.library.dependencies.PrimitiveDataTypes.IntStack;
 
@@ -72,6 +76,49 @@ class JohnsonComponent {
         this.graph = graph;
         nodeStack = new IntStack(graph.getSize());
         tempAdjacentNodesInComponent = new int[graph.getSize()];
+        this.draw();
+    }
+
+    public void draw() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("digraph G {\n");
+        stringBuilder.append("node[shape=record];\n");
+
+        for (int i=0; i<graph.getSize(); i++) {
+            Collection<Integer> integers = dependentlyBlocked.get(i);
+            integers = ImmutableList.of(0,1,2);
+            StringBuilder blockedBuilder = new StringBuilder();
+            blockedBuilder.append(i+"[label=\"{{"+i+"}|"+"{Blocks|");
+            String blockedAsString = Joiner.on("|").join(integers);
+            blockedBuilder.append(blockedAsString);
+            blockedBuilder.append("}");
+            blockedBuilder.append("}\"];\n");
+            stringBuilder.append(blockedBuilder.toString());
+        }
+
+
+        for (int i=0; i<graph.getSize(); i++) {
+            int[] adjacentNodesOfi = graph.getAdjacentNodesOf(i);
+            for (int j=0; j<adjacentNodesOfi.length;j++) {
+                stringBuilder.append(""+i+" -> " + adjacentNodesOfi[j] + ";\n");
+            }
+        }
+
+        int[] stack = {0,1,2}; // this.nodeStack.asArray();
+
+        StringBuilder stackBuilder = new StringBuilder();
+        stackBuilder.append("stack [label=\"{{stack}");
+
+        for (int i=0; i<stack.length; i++) {
+            stackBuilder.append("|{"+stack[i]+"}");
+        }
+        stackBuilder.append("}\"];\n");
+
+        stringBuilder.append(stackBuilder.toString());
+
+        stringBuilder.append("}");
+        String text = stringBuilder.toString();
+        GraphDrawer.drawGraph(text);
     }
 
     /**
