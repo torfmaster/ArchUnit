@@ -80,6 +80,7 @@ class JohnsonComponent {
     }
 
     public void draw() {
+
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("digraph G {\n");
         stringBuilder.append("node[shape=record];\n");
@@ -87,7 +88,8 @@ class JohnsonComponent {
         for (int i=0; i<graph.getSize(); i++) {
             Collection<Integer> integers = dependentlyBlocked.get(i);
             StringBuilder blockedBuilder = new StringBuilder();
-            blockedBuilder.append(i+"[label=\"{{"+i+"}|"+"{Blocks|");
+            String color = blocked.contains(i) ? "red" : "black";
+            blockedBuilder.append(i+"[color="+ color +",label=\"{{"+i+"}|"+"{Dep. Blocks|");
             String blockedAsString = Joiner.on("|").join(integers);
             blockedBuilder.append(blockedAsString);
             blockedBuilder.append("}");
@@ -158,6 +160,7 @@ class JohnsonComponent {
 
     void block(int nodeIndex) {
         blocked.add(nodeIndex);
+        this.draw();
     }
 
     void unblock(int nodeIndex) {
@@ -168,6 +171,8 @@ class JohnsonComponent {
             unblock(dependentlyBlockedIndex);
         }
         dependentlyBlocked.get(nodeIndex).clear();
+        this.draw();
+
     }
 
     /**
@@ -177,14 +182,20 @@ class JohnsonComponent {
      */
     void markDependentlyBlocked(int indexOfNodeDependentlyBlocked, int indexOfNode) {
         dependentlyBlocked.put(indexOfNode, indexOfNodeDependentlyBlocked);
+        this.draw();
+
     }
 
     void pushOnStack(int nodeIndex) {
         nodeStack.push(nodeIndex);
+        this.draw();
+
     }
 
     void popFromStack() {
         nodeStack.pop();
+        this.draw();
+
     }
 
     int[] getStack() {

@@ -150,6 +150,27 @@ public class GraphTest {
         assertThat(graph.findCycles()).isNotEmpty();
     }
 
+    @Test
+    public void example_graph() {
+        ImmutableSet<Integer> nodes = ImmutableSet.of(0, 1, 2, 3, 4, 5);
+        Graph<Integer, Integer> graph = new Graph<>();
+        graph.addNodes(nodes);
+
+        graph.addEdges(ImmutableSet.of(
+                new Edge<Integer, Integer>(0, 1),
+                new Edge<Integer, Integer>(0, 4),
+                new Edge<Integer, Integer>(1, 2),
+                new Edge<Integer, Integer>(2, 3),
+                new Edge<Integer, Integer>(2, 0),
+                new Edge<Integer, Integer>(2, 5),
+                new Edge<Integer, Integer>(3, 4),
+                new Edge<Integer, Integer>(4, 1),
+                new Edge<Integer, Integer>(5, 3)
+        ));
+
+        assertThat(graph.findCycles()).isNotEmpty();
+    }
+
     @SuppressWarnings("unchecked")
     private Graph<Integer, Integer> createCompleteGraph(int n) {
         ContiguousSet<Integer> integers = ContiguousSet.create(Range.closedOpen(0, n), integers());
